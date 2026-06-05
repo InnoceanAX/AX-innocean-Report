@@ -209,6 +209,7 @@ tbody tr.total-row td{font-weight:700;background:#FAFAFA}
 .gross-extra.show{display:flex}
 .chart-two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
 @media(max-width:1024px){.cgrid2{grid-template-columns:1fr}.sum-grid{grid-template-columns:1fr 1fr}.ph-kpi-grid{grid-template-columns:1fr 1fr}.form-grid{grid-template-columns:1fr}.chart-two-col{grid-template-columns:1fr}}
+.resize-handle{width:6px;background:transparent;cursor:col-resize;flex-shrink:0;position:relative;z-index:5;transition:background .2s}.resize-handle:hover,.resize-handle.active{background:#E5E7EB}
 </style>
 </head>
 <body>
@@ -286,6 +287,7 @@ tbody tr.total-row td{font-weight:700;background:#FAFAFA}
         <span>AI</span>
       </div>
     </div>
+    <div class="resize-handle" onmousedown="initResize(event)"></div>
     <div class="ai-main">
       <div>
         <div style="font-size:16px;font-weight:700;color:#000;margin-bottom:4px">이상치 탐지 대시보드</div>
@@ -958,7 +960,7 @@ const state = {
 
 // ─── PAGE ROUTING ───
 function showPage(id) {
-    var mn=document.getElementById('mainNav');if(mn)mn.style.display=(id==='landing')?'none':'flex';var hc=document.getElementById('hdrContainer');if(hc)hc.style.maxWidth=(id==='landing')?'1280px':'none';var sh=document.querySelector('.subheader');if(sh)sh.style.display=(id==='landing')?'flex':'none';document.querySelectorAll('.page').forEach(function(p){p.style.minHeight=(id==='landing')?'':'calc(100vh - var(--hh))';});
+    var mn=document.getElementById('mainNav');if(mn)mn.style.display=(id==='landing')?'none':'flex';var hc=document.getElementById('hdrContainer');if(hc)hc.style.maxWidth=(id==='landing')?'1280px':'none';var sh=document.querySelector('.subheader');if(sh)sh.style.display=(id==='landing')?'flex':'none';var po=document.querySelector('.poffset');if(po)po.style.paddingTop=(id==='landing')?'':'var(--hh)';document.querySelectorAll('.page').forEach(function(p){p.style.minHeight=(id==='landing')?'':'calc(100vh - var(--hh))';});
     history.pushState({pg:id},'',(id==='landing')?'/':'?pg='+id);
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.ntab').forEach(t => t.classList.remove('active'));
@@ -1341,6 +1343,32 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 window.addEventListener('popstate',function(e){var p=(e.state&&e.state.pg)||'landing';showPage(p);});
+
+var _resizing=false,_startX=0,_startW=0,_sidebarEl=null;
+function initResize(e){
+  _sidebarEl=document.getElementById('ai-sidebar');
+  if(!_sidebarEl)return;
+  _resizing=true;_startX=e.clientX;_startW=_sidebarEl.offsetWidth;
+  document.body.style.cursor='col-resize';document.body.style.userSelect='none';
+  e.target.classList.add('active');
+  document.addEventListener('mousemove',doResize);
+  document.addEventListener('mouseup',stopResize);
+}
+function doResize(e){
+  if(!_resizing)return;
+  var w=_startW+(e.clientX-_startX);
+  if(w<200)w=200;if(w>600)w=600;
+  _sidebarEl.style.width=w+'px';_sidebarEl.style.minWidth=w+'px';
+  var inner=_sidebarEl.querySelector('.sidebar-inner');
+  if(inner)inner.style.width=w+'px';
+}
+function stopResize(e){
+  _resizing=false;document.body.style.cursor='';document.body.style.userSelect='';
+  document.querySelectorAll('.resize-handle').forEach(function(h){h.classList.remove('active');});
+  document.removeEventListener('mousemove',doResize);
+  document.removeEventListener('mouseup',stopResize);
+}
+
 </script>
 </body>
 </html>
