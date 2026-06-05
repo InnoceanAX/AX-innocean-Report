@@ -17,8 +17,8 @@
   --hh:70px;--sh:40px;--fh:80px;
 }
 html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:#fff;color:#000}
-.header{position:fixed;top:0;left:0;right:0;z-index:1000;height:var(--hh);background:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 40px}
-.hlogo{font-size:20px;font-weight:800;color:#000;letter-spacing:.05em;cursor:pointer;user-select:none}
+.header{border-bottom:1px solid var(--border);position:fixed;top:0;left:0;right:0;z-index:1000;height:var(--hh);background:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 40px}
+.hlogo{font-size:20px;font-weight:800;color:#000;letter-spacing:0;cursor:pointer;user-select:none}
 .hnav{display:flex;gap:22px;align-items:center}
 .ntab{font-size:13px;font-weight:500;color:var(--text-muted);cursor:pointer;padding:4px 0;border:none;background:none;border-bottom:2px solid transparent;transition:color .2s;font-family:'Noto Sans KR',sans-serif}
 .ntab:hover{color:#000}
@@ -33,7 +33,7 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:#fff;colo
 .page{display:none;min-height:calc(100vh - var(--hh) - var(--sh));flex-direction:column}
 .page.active{display:flex}
 .lc{max-width:1200px;margin:0 auto;padding:60px 40px 80px;flex:1;display:flex;flex-direction:column}
-.badge{display:inline-block;background:#F3F4F6;color:#4B5563;font-size:11px;font-weight:600;letter-spacing:.1em;padding:6px 14px;margin-bottom:24px;align-self:flex-start}
+.badge{display:inline-block;background:transparent;color:#6B7280;font-size:11px;font-weight:600;letter-spacing:.12em;padding:6px 14px;border:1px solid #D1D5DB;border-radius:20px;margin-bottom:24px;align-self:flex-start}
 .ltitle{font-size:48px;font-weight:800;color:#000;letter-spacing:-.02em;line-height:1.2;margin-bottom:16px}
 .ldesc{font-size:15px;color:var(--text-secondary);line-height:1.6;margin-bottom:48px;max-width:560px}
 .slabel{font-size:14px;font-weight:700;color:#000;margin-bottom:24px}
@@ -127,7 +127,7 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:#fff;colo
 .sec-t{font-size:15px;font-weight:700;color:#000}
 .twrap{overflow-x:auto;margin-bottom:22px}
 table{width:100%;border-collapse:collapse;font-size:13px}
-thead th{background:#F3F4F6;border:1px solid var(--border);padding:10px 14px;text-align:left;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+thead th{background:#EEF2FF;border:1px solid var(--border);padding:10px 14px;text-align:left;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
 tbody td{border:1px solid var(--border);padding:10px 14px;color:#000}
 tbody tr:hover td{background:#F9F9FF}
 tbody tr.total-row td{font-weight:700;background:#FAFAFA}
@@ -210,7 +210,7 @@ tbody tr.total-row td{font-weight:700;background:#FAFAFA}
 </head>
 <body>
 <header class="header">
-  <span class="hlogo" onclick="showPage('landing')">INNOCEAN</span>
+  <div style="display:flex;align-items:center;gap:16px"><span class="hlogo" onclick="showPage('landing')">| INNOCEAN</span><span style="font-size:13px;color:#9CA3AF;font-weight:500;letter-spacing:.12em;text-transform:uppercase">REPORT</span></div>
   <nav class="hnav">
     <button class="ntab active" id="tab-landing" onclick="showPage('landing')">홈</button>
     <button class="ntab" id="tab-ai" onclick="showPage('ai')">AI 리포트</button>
