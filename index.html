@@ -970,7 +970,7 @@ const state = {
 
 // ─── PAGE ROUTING ───
 function showPage(id) {
-    var mn=document.getElementById('mainNav');if(mn)mn.style.display=(id==='landing')?'none':'flex';
+    var mn=document.getElementById('mainNav');if(mn)mn.style.display=(id==='landing')?'none':'flex';var sh=document.querySelector('.subheader');if(sh)sh.style.display=(id==='landing')?'flex':'none';document.querySelectorAll('.page').forEach(function(p){p.style.minHeight=(id==='landing')?'':'calc(100vh - var(--hh))';});
     history.pushState({pg:id},'',(id==='landing')?'/':'?pg='+id);
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.ntab').forEach(t => t.classList.remove('active'));
