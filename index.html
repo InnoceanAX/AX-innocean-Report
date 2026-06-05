@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>INNOCEAN REPORT | INNOCEAN</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js">
 window.addEventListener('popstate',function(e){var p=(e.state&&e.state.pg)||'landing';showPage(p);});
@@ -1212,7 +1213,7 @@ function addPhaseCard(name, start, end, idx) {
   const div = document.createElement('div');
   div.className = 'phase-card';
   div.id = id;
-  div.innerHTML = '<div class="phase-card-hd"><span style="font-size:13px;font-weight:700">Phase ' + (list.children.length + 1) + '</span><button class="phase-del" onclick="deletePhase('' + id + '')">×</button></div>'
+  div.innerHTML = '<div class="phase-card-hd"><span style="font-size:13px;font-weight:700">Phase ' + (list.children.length + 1) + '</span><button class="phase-del" onclick="deletePhase(\'' + id + '\')">×</button></div>'
     + '<div class="phase-card-body"><div class="form-grid">'
     + '<div class="form-group"><label class="form-lbl">Phase명</label><input class="form-inp" value="' + name + '" placeholder="Phase명을 입력해주세요"></div>'
     + '<div class="form-group"><label class="form-lbl">시작일</label><input class="form-inp fdate" type="date" value="' + start + '"></div>'
