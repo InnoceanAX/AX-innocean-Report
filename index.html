@@ -394,6 +394,27 @@ body.dark .user-chart-card{background:var(--card-bg);border-color:var(--border-c
 .user-chart-card .ccard-hd{margin-bottom:10px}
 .user-chart-card .di-panel{margin-bottom:8px}
 .user-chart-card .chart-wrap-sm{height:240px}
+
+/* CEO 2026-06-08 16:11 — 다중 디멘션 계층 트리 표 */
+.hier-tree td:first-child{padding-left:8px}
+.hier-tree tr[data-lvl="1"] td:first-child{padding-left:32px;color:#374151}
+.hier-tree tr[data-lvl="2"] td:first-child{padding-left:60px;color:#6B7280;font-size:12px}
+.hier-tree tr[data-lvl="3"] td:first-child{padding-left:84px;color:#9CA3AF;font-size:12px}
+.hier-tree tr[data-lvl="0"] td{background:#F9FAFB;font-weight:700}
+.hier-tree tr[data-lvl="1"] td{background:#fff}
+.hier-tree tr[data-lvl="2"] td{background:#FAFBFC}
+.hier-tree .hier-toggle{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border:1px solid var(--bdr);background:#fff;cursor:pointer;margin-right:6px;font-size:10px;color:#6B7280;border-radius:2px;font-family:inherit;font-weight:700;vertical-align:middle}
+.hier-tree .hier-toggle:hover{background:#000;color:#fff;border-color:#000}
+.hier-tree .hier-toggle.open{background:#1F2937;color:#fff;border-color:#1F2937}
+.hier-tree .hier-leaf{display:inline-block;width:18px;height:18px;margin-right:6px;vertical-align:middle}
+.hier-tree tr.hier-hidden{display:none}
+body.dark .hier-tree tr[data-lvl="0"] td{background:var(--bg-soft)}
+body.dark .hier-tree tr[data-lvl="1"] td{background:var(--card-bg)}
+body.dark .hier-tree tr[data-lvl="2"] td{background:var(--bg-soft2)}
+.dim-combo-label{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}
+.dim-combo-label .dc-chip{display:inline-block;padding:2px 8px;font-size:10px;background:#F3F4F6;color:#374151;border:1px solid var(--bdr);border-radius:10px;font-weight:600}
+.dim-combo-label .dc-x{color:#9CA3AF;font-size:10px}
+
 /* KPI 트리 테이블 (매체/상품별 KPI 목표) — CEO 2026-06-08 15:49 */
 .kpi-tree-table{width:100%;border-collapse:collapse;font-size:13px}
 .kpi-tree-table th{font-size:11px;font-weight:700;color:#6B7280;letter-spacing:.05em;background:#F9FAFB;padding:8px 6px;border-bottom:1px solid var(--bdr);text-transform:uppercase;text-align:center}
@@ -2044,6 +2065,117 @@ window.addEventListener('DOMContentLoaded',function(){
     return '';
   }
 
+
+  // === 다중 디멘션 계층 트리 (CEO 2026-06-08 16:11) ===
+  // 디멘션 N개 → N단계 계층. 각 레벨 라벨은 labelsForDim에서.
+  function buildHierRows(dimIds){
+    if(!dimIds||!dimIds.length) return [{lvl:0,key:'all',path:[],label:'전체',hasChildren:false}];
+    function rec(lvl,parentPath){
+      var dim=dimIds[lvl];
+      var labels=labelsForDim(dim);
+      // 너무 많으면 자르기 (UX)
+      labels=labels.slice(0,Math.min(labels.length,6));
+      var rows=[];
+      labels.forEach(function(lbl){
+        var path=parentPath.concat([lbl]);
+        var hasC=(lvl+1<dimIds.length);
+        rows.push({lvl:lvl,key:path.join(' / '),path:path,label:lbl,hasChildren:hasC,dimId:dim});
+        if(hasC){
+          rec(lvl+1,path).forEach(function(r){rows.push(r);});
+        }
+      });
+      return rows;
+    }
+    return rec(0,[]);
+  }
+
+  function sampleValue(idxId){
+    var unit=unitFor(idxId);
+    var v;
+    if(unit==='%') v=rand(0.4,5.5);
+    else if(unit==='원') v=Math.round(rand(2,80)*1e6);
+    else if(/_index$/.test(idxId)) v=rand(60,135);
+    else v=Math.round(rand(20,9000)*100);
+    return v;
+  }
+  function fmtValByIdx(idxId,v){
+    var unit=unitFor(idxId);
+    if(v==null||isNaN(v)) return '-';
+    if(unit==='%') return v.toFixed(2)+'%';
+    if(unit==='원') return '₩'+Math.round(v).toLocaleString();
+    if(/_index$/.test(idxId)) return v.toFixed(1)+'%';
+    return v.toLocaleString();
+  }
+
+  function dimComboLabel(dimIds){
+    if(!dimIds||!dimIds.length) return '<span style="color:#9CA3AF">디멘션 없음</span>';
+    return '<span class="dim-combo-label">'+dimIds.map(function(d,i){
+      return '<span class="dc-chip">'+findDimLabel(d)+'</span>'+(i<dimIds.length-1?'<span class="dc-x">×</span>':'');
+    }).join('')+'</span>';
+  }
+
+  // 트리 행 → tbody HTML
+  function renderHierTbody(dimIds,idxIds){
+    var rows=buildHierRows(dimIds);
+    var html='';
+    // 전체 합계 행
+    html+='<tr class="total-row" data-lvl="-1"><td><strong>전체</strong></td>';
+    idxIds.forEach(function(idxId){html+='<td>'+fmtValByIdx(idxId,sampleValue(idxId))+'</td>';});
+    html+='</tr>';
+    rows.forEach(function(r,ri){
+      var hiddenCls=(r.lvl>0)?' hier-hidden':'';
+      var rowKey='hr_'+ri;
+      var toggleHtml=r.hasChildren
+        ? '<button class="hier-toggle" data-rowkey="'+rowKey+'" data-lvl="'+r.lvl+'" onclick="hierToggle(this)">+</button>'
+        : '<span class="hier-leaf"></span>';
+      html+='<tr data-lvl="'+r.lvl+'" data-key="'+rowKey+'" data-parent-lvl="'+(r.lvl-1)+'" class="'+hiddenCls+'">'+
+        '<td>'+toggleHtml+r.label+'</td>';
+      idxIds.forEach(function(idxId){html+='<td>'+fmtValByIdx(idxId,sampleValue(idxId))+'</td>';});
+      html+='</tr>';
+    });
+    return html;
+  }
+
+  window.hierToggle=function(btn){
+    var lvl=parseInt(btn.getAttribute('data-lvl'),10);
+    var rowkey=btn.getAttribute('data-rowkey');
+    var trMain=btn.closest('tr');
+    var open=btn.classList.toggle('open');
+    btn.textContent=open?'\u2212':'+';
+    // 다음 형제 행들을 순회: lvl > 현재 lvl인 행이 자식
+    var sib=trMain.nextElementSibling;
+    while(sib){
+      var sLvl=parseInt(sib.getAttribute('data-lvl'),10);
+      if(isNaN(sLvl)||sLvl<=lvl)break;
+      if(open){
+        // 바로 아래 자식(lvl+1)만 보이고, 더 깊은 자식은 그 자식이 열려있을 때만
+        if(sLvl===lvl+1){sib.classList.remove('hier-hidden');}
+        else {
+          // 부모 자식이 닫혀있으면 숨김 유지
+          var keep=true;
+          var p=sib.previousElementSibling;
+          // 가장 가까운 lvl+1 행의 toggle 상태 확인
+          while(p){
+            var pLvl=parseInt(p.getAttribute('data-lvl'),10);
+            if(pLvl===lvl+1){
+              var pBtn=p.querySelector('.hier-toggle');
+              keep=pBtn?pBtn.classList.contains('open'):false;
+              break;
+            }
+            if(pLvl<=lvl)break;
+            p=p.previousElementSibling;
+          }
+          if(!keep) sib.classList.add('hier-hidden');
+          else sib.classList.remove('hier-hidden');
+        }
+      } else {
+        sib.classList.add('hier-hidden');
+        var sBtn=sib.querySelector('.hier-toggle');
+        if(sBtn){sBtn.classList.remove('open');sBtn.textContent='+';}
+      }
+      sib=sib.nextElementSibling;
+    }
+  };
   // ---------- defaults snapshot ----------
   window.DI_STATE_DEFAULTS=JSON.parse(JSON.stringify(window.DI_STATE||{}));
 
@@ -2122,25 +2254,47 @@ window.addEventListener('DOMContentLoaded',function(){
     var grid=document.getElementById('daily-sum-grid');if(!grid)return;
     var st=window.DI_STATE['daily-sum-di'];if(!st)return;
     grid.innerHTML='';
-    st.idxs.forEach(function(idxId){
-      var meta=findIdx(idxId);if(!meta)return;
-      var unit=unitFor(idxId);
-      var val,goal,rate;
+    var dims=(st.dims||[]).slice();
+    var splitDim=dims.filter(function(d){return ['date','month','year'].indexOf(d)<0;})[0];
+    function mk(idxId){
+      var unit=unitFor(idxId);var val,goal,rate;
       if(unit==='%'){val=rand(0.5,4.5);goal=rand(1.0,3.5);rate=Math.round(val/goal*1000)/10;}
-      else if(unit==='원'){val=Math.round(rand(20,150))*1000000;goal=Math.round(rand(40,200))*1000000;rate=Math.round(val/goal*1000)/10;}
+      else if(unit==='원'){val=Math.round(rand(20,150))*1e6;goal=Math.round(rand(40,200))*1e6;rate=Math.round(val/goal*1000)/10;}
       else if(/_index$/.test(idxId)){val=rand(70,115);goal=100;rate=val;}
       else {val=Math.round(rand(50,500))*1000;goal=Math.round(rand(80,650))*1000;rate=Math.round(val/goal*1000)/10;}
-      var displayVal=(unit==='원')?('₩'+fmtN(val)):(unit==='%'?(val.toFixed(2)+'%'):fmtN(val));
-      var displayGoal=(unit==='원')?('₩'+fmtN(goal)):(unit==='%'?(goal.toFixed(2)+'%'):fmtN(goal));
-      var pw=Math.min(rate,150);
-      var card=document.createElement('div');
-      card.className='sum-card fade-in';
-      card.innerHTML='<div class="sum-lbl">'+meta.label+'</div>'+
-        '<div class="sum-val">'+displayVal+'</div>'+
-        '<div class="sum-goal">목표: '+displayGoal+'</div>'+
-        '<div class="sum-rate">달성률 '+rate.toFixed(1)+'%</div>'+
-        '<div class="pbar-wrap"><div class="pbar'+(rate>=100?' over':'')+'" style="width:'+pw+'%"></div></div>';
-      grid.appendChild(card);
+      var dv=(unit==='원')?('₩'+fmtN(val)):(unit==='%'?(val.toFixed(2)+'%'):fmtN(val));
+      var dg=(unit==='원')?('₩'+fmtN(goal)):(unit==='%'?(goal.toFixed(2)+'%'):fmtN(goal));
+      return {val:val,goal:goal,rate:rate,dv:dv,dg:dg};
+    }
+    st.idxs.forEach(function(idxId){
+      var meta=findIdx(idxId);if(!meta)return;
+      if(!splitDim){
+        var d=mk(idxId);var pw=Math.min(d.rate,150);
+        var card=document.createElement('div');card.className='sum-card fade-in';
+        card.innerHTML='<div class="sum-lbl">'+meta.label+'</div>'+
+          '<div class="sum-val">'+d.dv+'</div>'+
+          '<div class="sum-goal">목표: '+d.dg+'</div>'+
+          '<div class="sum-rate">달성률 '+d.rate.toFixed(1)+'%</div>'+
+          '<div class="pbar-wrap"><div class="pbar'+(d.rate>=100?' over':'')+'" style="width:'+pw+'%"></div></div>';
+        grid.appendChild(card);
+      } else {
+        var labels=labelsForDim(splitDim).slice(0,4);
+        var box=document.createElement('div');box.className='sum-card sum-group fade-in';box.style.gridColumn='span 2';
+        var h='<div class="sum-lbl">'+meta.label+' <span style="font-size:11px;color:#6B7280;font-weight:500">· '+findDimLabel(splitDim)+'별</span></div>'+
+          '<div style="display:grid;grid-template-columns:repeat('+Math.min(labels.length,4)+',1fr);gap:8px;margin-top:8px">';
+        labels.forEach(function(lbl){
+          var d=mk(idxId);var pw=Math.min(d.rate,150);
+          var rclr=d.rate>=100?'#22C55E':(d.rate>=80?'#6B7280':'#EF4444');
+          h+='<div style="padding:8px;border:1px solid var(--bdr);background:#fff">'+
+            '<div style="font-size:10px;color:#6B7280;font-weight:600">'+lbl+'</div>'+
+            '<div style="font-size:18px;font-weight:700;color:#111;margin-top:2px">'+d.dv+'</div>'+
+            '<div style="font-size:10px;color:#9CA3AF">목표 '+d.dg+'</div>'+
+            '<div style="font-size:10px;color:'+rclr+';font-weight:600">달성 '+d.rate.toFixed(1)+'%</div>'+
+            '<div class="pbar-wrap" style="margin-top:4px"><div class="pbar'+(d.rate>=100?' over':'')+'" style="width:'+pw+'%"></div></div>'+
+          '</div>';
+        });
+        h+='</div>';box.innerHTML=h;grid.appendChild(box);
+      }
     });
   };
 
@@ -2150,40 +2304,20 @@ window.addEventListener('DOMContentLoaded',function(){
     var t=document.getElementById('daily-mtable');if(!t)return;
     var st=window.DI_STATE['daily-tbl-di'];if(!st)return;
     var idxs=st.idxs.slice();
-    // 1열 디멘션: 선택된 dim 중 첫 항목. 없으면 media 기본.
-    var firstDim=(st.dims&&st.dims[0])||'media';
-    var dimMeta=null;
-    for(var i=0;i<window.DIM_CATALOG.length;i++){if(window.DIM_CATALOG[i].id===firstDim){dimMeta=window.DIM_CATALOG[i];break;}}
-    var dimLabel=dimMeta?dimMeta.label:'매체';
-    var rowLabels=labelsForDim(firstDim);
-    // 전체 합계 행을 맨 위에 추가
-    var allLabels=['전체'].concat(rowLabels);
-
-    var thead='<tr><th class="sortable" data-col="0">'+dimLabel+' <span class="arrow">↕</span></th>';
+    var dims=(st.dims&&st.dims.length)?st.dims.slice():['media'];
+    // 헤더: 1열 = 디멘션 조합 라벨
+    var firstColLabel=dims.map(function(d){return findDimLabel(d);}).join(' / ');
+    t.classList.add('hier-tree');
+    var thead='<tr><th class="sortable" data-col="0">'+firstColLabel+' <span class="arrow">↕</span></th>';
     idxs.forEach(function(idxId,ii){
       var meta=findIdx(idxId);if(!meta)return;
       var unit=unitFor(idxId);
       thead+='<th class="sortable" data-col="'+(ii+1)+'">'+meta.label+(unit?(' ('+unit+')'):'')+' <span class="arrow">↕</span></th>';
     });
     thead+='</tr>';
-    var rows='';
-    allLabels.forEach(function(m,ri){
-      var rowCls=(ri===0)?'total-row':'';
-      var tr='<tr class="'+rowCls+'"><td>'+m+'</td>';
-      idxs.forEach(function(idxId){
-        var unit=unitFor(idxId);var v;
-        if(unit==='%')v=rand(0.4,5.5).toFixed(2)+'%';
-        else if(unit==='₩')v='₩'+(Math.round(rand(2,80)*1e6)).toLocaleString();
-        else if(/_index$/.test(idxId)){var rv=rand(60,135);v=rv.toFixed(1)+'%';}
-        else v=(Math.round(rand(20,9000)*100)).toLocaleString();
-        tr+='<td class="daily-mtable-col-fade">'+v+'</td>';
-      });
-      tr+='</tr>';
-      rows+=tr;
-    });
-    t.innerHTML='<thead>'+thead+'</thead><tbody>'+rows+'</tbody>';
+    var tbody=renderHierTbody(dims,idxs);
+    t.innerHTML='<thead>'+thead+'</thead><tbody>'+tbody+'</tbody>';
     attachSortableTo(t);
-    // 변화 시각화: 카드 깜빡임
     var wrap=t.closest('.chart-card')||t.parentElement;
     if(wrap){wrap.classList.add('di-flash');setTimeout(function(){wrap.classList.remove('di-flash');},700);}
   };
@@ -2193,27 +2327,50 @@ window.addEventListener('DOMContentLoaded',function(){
   window.renderPhaseKpi=function(){
     var grid=document.getElementById('phase-kpi-grid');if(!grid)return;
     var st=window.DI_STATE['phase-kpi-di'];if(!st)return;
+    var dims=(st.dims||[]).slice();
+    var splitDim=dims.filter(function(d){return ['date','month','year'].indexOf(d)<0;})[0];
+    function fmtV(unit,v){
+      if(unit==='%')return v.toFixed(2)+'%';
+      if(unit==='원'){if(v>=1e8)return '₩'+(v/1e8).toFixed(1)+'억';if(v>=1e6)return '₩'+(v/1e6).toFixed(1)+'M';return '₩'+Math.round(v).toLocaleString();}
+      if(v>=1e6)return (v/1e6).toFixed(2)+'M';if(v>=1e3)return (v/1e3).toFixed(1)+'K';return Math.round(v).toLocaleString();
+    }
+    function mk(unit){
+      var target,actual;
+      if(unit==='%'){target=rand(1.5,3.5);actual=target*rand(0.7,1.3);}
+      else if(unit==='원'){target=rand(20,80)*1e6;actual=target*rand(0.65,1.15);}
+      else{target=Math.round(rand(2,7)*1e6);actual=Math.round(target*rand(0.65,1.15));}
+      return {target:target,actual:actual,rate:(actual/target)*100};
+    }
     var html='';
     st.idxs.forEach(function(idxId){
       var meta=findIdx(idxId);if(!meta)return;
       var unit=unitFor(idxId);
-      function fmtVal(v){
-        if(unit==='%')return v.toFixed(2)+'%';
-        if(unit==='₩'){if(v>=1e8)return '₩'+(v/1e8).toFixed(1)+'억';if(v>=1e6)return '₩'+(v/1e6).toFixed(1)+'M';return '₩'+Math.round(v).toLocaleString();}
-        if(v>=1e6)return (v/1e6).toFixed(2)+'M';if(v>=1e3)return (v/1e3).toFixed(1)+'K';return Math.round(v).toLocaleString();
+      if(!splitDim){
+        var v=mk(unit);var rc=v.rate>=95?'on':'off';
+        html+='<div class="ph-kpi-card">'+
+          '<div class="ph-kpi-lbl">'+meta.label+'</div>'+
+          '<div class="ph-kpi-target">목표: '+fmtV(unit,v.target)+'</div>'+
+          '<div class="ph-kpi-actual">'+fmtV(unit,v.actual)+'</div>'+
+          '<div class="ph-kpi-rate '+rc+'">달성률 '+v.rate.toFixed(1)+'%</div>'+
+          '</div>';
+      } else {
+        var labels=labelsForDim(splitDim).slice(0,4);
+        var inner='<div style="display:grid;grid-template-columns:repeat('+Math.min(labels.length,4)+',1fr);gap:8px;margin-top:8px">';
+        labels.forEach(function(lbl){
+          var v=mk(unit);var rclr=v.rate>=95?'#22C55E':(v.rate>=80?'#6B7280':'#EF4444');
+          inner+='<div style="padding:8px;border:1px solid var(--bdr);background:#fff">'+
+            '<div style="font-size:10px;color:#6B7280;font-weight:600">'+lbl+'</div>'+
+            '<div style="font-size:16px;font-weight:700;color:#111;margin-top:2px">'+fmtV(unit,v.actual)+'</div>'+
+            '<div style="font-size:10px;color:#9CA3AF">목표 '+fmtV(unit,v.target)+'</div>'+
+            '<div style="font-size:10px;color:'+rclr+';font-weight:600">달성 '+v.rate.toFixed(1)+'%</div>'+
+          '</div>';
+        });
+        inner+='</div>';
+        html+='<div class="ph-kpi-card" style="grid-column:span 2">'+
+          '<div class="ph-kpi-lbl">'+meta.label+' <span style="font-size:11px;color:#6B7280;font-weight:500">· '+findDimLabel(splitDim)+'별</span></div>'+
+          inner+
+          '</div>';
       }
-      var target,actual;
-      if(unit==='%'){target=rand(1.5,3.5);actual=target*rand(0.7,1.3);}
-      else if(unit==='₩'){target=rand(20,80)*1e6;actual=target*rand(0.65,1.15);}
-      else{target=Math.round(rand(2,7)*1e6);actual=Math.round(target*rand(0.65,1.15));}
-      var rate=(actual/target)*100;
-      var rateCls=(rate>=95)?'on':'off';
-      html+='<div class="ph-kpi-card">'+
-        '<div class="ph-kpi-lbl">'+meta.label+'</div>'+
-        '<div class="ph-kpi-target">목표: '+fmtVal(target)+'</div>'+
-        '<div class="ph-kpi-actual">'+fmtVal(actual)+'</div>'+
-        '<div class="ph-kpi-rate '+rateCls+'">달성률 '+rate.toFixed(1)+'%</div>'+
-        '</div>';
     });
     if(!html)html='<div style="color:#9CA3AF;padding:24px;text-align:center;grid-column:1/-1">지표를 추가해주세요</div>';
     grid.innerHTML=html;
@@ -2560,13 +2717,13 @@ window.addEventListener('DOMContentLoaded',function(){
   window.renderPhaseCmp=function(){
     var t=document.getElementById('phase-cmp-table');if(!t)return;
     var st=window.DI_STATE['phase-cmp-di'];if(!st)return;
-    var firstDim=(st.dims&&st.dims[0])||'phase';
-    var dimMeta=null;
-    for(var i=0;i<window.DIM_CATALOG.length;i++){if(window.DIM_CATALOG[i].id===firstDim){dimMeta=window.DIM_CATALOG[i];break;}}
-    var dimLabel=dimMeta?dimMeta.label:'Phase';
-    var rowLabels=labelsForDim(firstDim);
-    // 헤더: 1열(dim) + 기간 + 각 지표×(목표/실적/달성률)
-    var thead='<tr><th class="sortable" data-col="0">'+dimLabel+' <span class="arrow">↕</span></th><th>기간</th>';
+    var dims=(st.dims&&st.dims.length)?st.dims.slice():['phase'];
+    var firstColLabel=dims.map(function(d){return findDimLabel(d);}).join(' ▶ ');
+    t.classList.add('hier-tree');
+    var hasPhase=dims.indexOf('phase')>=0;
+    var phaseIsFirst=(dims[0]==='phase');
+    // 헤더
+    var thead='<tr><th class="sortable" data-col="0">'+firstColLabel+' <span class="arrow">↕</span></th>'+(hasPhase?'<th>기간</th>':'');
     st.idxs.forEach(function(idxId){
       var meta=findIdx(idxId);if(!meta)return;
       var unit=unitFor(idxId);
@@ -2574,29 +2731,48 @@ window.addEventListener('DOMContentLoaded',function(){
       thead+='<th>'+lbl+' 목표</th><th>'+lbl+' 실적</th><th>'+lbl+' 달성률</th>';
     });
     thead+='</tr>';
-    // 기간 매핑(phase 외엔 '-')
     var periods={'사전 준비':'06/01~06/07','런칭':'06/08~06/14','성수기':'06/15~06/25','마무리':'06/26~06/30'};
-    var rows='';
-    rowLabels.forEach(function(m,ri){
-      var rowCls=(m==='성수기')?'total-row':'';
-      var tr='<tr class="'+rowCls+'"><td><strong>'+m+(m==='성수기'?' ★현재':'')+'</strong></td><td>'+(periods[m]||'-')+'</td>';
-      st.idxs.forEach(function(idxId){
-        var unit=unitFor(idxId);
-        function fmtVal(v){
-          if(unit==='%')return v.toFixed(2)+'%';
-          if(unit==='₩')return '₩'+(Math.round(v)).toLocaleString();
-          return Math.round(v).toLocaleString();
-        }
-        var target,actual;
-        if(unit==='%'){target=rand(1.5,3.5);actual=target*rand(0.7,1.3);}
-        else if(unit==='₩'){target=rand(20,80)*1e6;actual=target*rand(0.7,1.1);}
-        else{target=Math.round(rand(2,7)*1e6);actual=Math.round(target*rand(0.65,1.15));}
-        var rate=(actual/target)*100;
-        var clr=(rate>=95)?'#22C55E':(rate>=80?'':'#EF4444');
-        var rateHtml=clr?('<span style="color:'+clr+'">'+rate.toFixed(1)+'%</span>'):(rate.toFixed(1)+'%');
-        tr+='<td>'+fmtVal(target)+'</td><td>'+fmtVal(actual)+'</td><td>'+rateHtml+'</td>';
+    function fmtCell(idxId,v){
+      var unit=unitFor(idxId);
+      if(unit==='%')return v.toFixed(2)+'%';
+      if(unit==='원')return '₩'+(Math.round(v)).toLocaleString();
+      return Math.round(v).toLocaleString();
+    }
+    function mkTgtAct(unit){
+      var target,actual;
+      if(unit==='%'){target=rand(1.5,3.5);actual=target*rand(0.7,1.3);}
+      else if(unit==='원'){target=rand(20,80)*1e6;actual=target*rand(0.7,1.1);}
+      else{target=Math.round(rand(2,7)*1e6);actual=Math.round(target*rand(0.65,1.15));}
+      return {target:target,actual:actual,rate:(actual/target)*100};
+    }
+    function buildCells(idxs){
+      var c='';
+      idxs.forEach(function(idxId){
+        var unit=unitFor(idxId);var v=mkTgtAct(unit);
+        var clr=(v.rate>=95)?'#22C55E':(v.rate>=80?'':'#EF4444');
+        var rateHtml=clr?('<span style="color:'+clr+'">'+v.rate.toFixed(1)+'%</span>'):(v.rate.toFixed(1)+'%');
+        c+='<td>'+fmtCell(idxId,v.target)+'</td><td>'+fmtCell(idxId,v.actual)+'</td><td>'+rateHtml+'</td>';
       });
-      tr+='</tr>';
+      return c;
+    }
+    var rowsArr=buildHierRows(dims);
+    var rows='';
+    // 전체 합계
+    rows+='<tr class="total-row" data-lvl="-1"><td><strong>전체</strong></td>'+(hasPhase?'<td>06/01~06/30</td>':'')+buildCells(st.idxs)+'</tr>';
+    rowsArr.forEach(function(r,ri){
+      var hiddenCls=(r.lvl>0)?' hier-hidden':'';
+      var rowKey='hpc_'+ri;
+      var toggleHtml=r.hasChildren
+        ? '<button class="hier-toggle" data-rowkey="'+rowKey+'" data-lvl="'+r.lvl+'" onclick="hierToggle(this)">+</button>'
+        : '<span class="hier-leaf"></span>';
+      var isCurrent=(r.label==='성수기'&&dims.indexOf('phase')>=0);
+      var tr='<tr data-lvl="'+r.lvl+'" data-key="'+rowKey+'" class="'+hiddenCls+'">'+
+        '<td>'+toggleHtml+'<strong>'+r.label+(isCurrent?' ★현재':'')+'</strong></td>';
+      if(hasPhase){
+        var per=(phaseIsFirst && r.lvl===0)?(periods[r.label]||'-'):'-';
+        tr+='<td>'+per+'</td>';
+      }
+      tr+=buildCells(st.idxs)+'</tr>';
       rows+=tr;
     });
     t.innerHTML='<thead>'+thead+'</thead><tbody>'+rows+'</tbody>';
