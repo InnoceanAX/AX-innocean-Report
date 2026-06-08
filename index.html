@@ -109,8 +109,8 @@ body.dark .sol-divider .sd-lbl{color:var(--text2)}
 .ai-main{flex:1;overflow-y:auto;padding:32px 40px;display:flex;flex-direction:column;gap:20px;background:#FAFAFA}
 .chart-card{background:#fff;border:1px solid var(--border);padding:24px}
 .ccard-hd{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px}
-.ccard-t{font-size:14px;font-weight:700;color:#000}
-.ccard-s{font-size:12px;color:var(--text-muted);margin-top:4px}
+.ccard-t{font-size:14px;font-weight:700;color:#000;overflow-wrap:break-word;word-break:keep-all;line-height:1.35}
+.ccard-s{font-size:12px;color:var(--text-muted);margin-top:4px;overflow-wrap:break-word;word-break:keep-all;line-height:1.4}
 .cwrap{position:relative;height:260px}
 .kpi-row{display:flex;gap:14px;flex-wrap:wrap}
 .kpi-card{flex:1;min-width:130px;background:#fff;border:1px solid var(--border);padding:16px 20px}
@@ -2380,7 +2380,7 @@ window.addEventListener('DOMContentLoaded',function(){
   };
 
   // ---------- User Charts System (CEO 2026-06-08 14:57) ----------
-  var USER_CHARTS_KEY='inn_rp_uc_v1';
+  var USER_CHARTS_KEY='inn_rp_uc_v2';
   function ucLoad(){try{return JSON.parse(localStorage.getItem(USER_CHARTS_KEY)||'{}');}catch(e){return {};}}
   function ucSave(o){try{localStorage.setItem(USER_CHARTS_KEY,JSON.stringify(o));}catch(e){}}
   function uid(){return 'uc_'+Math.random().toString(36).slice(2,9);}
@@ -2720,12 +2720,17 @@ window.addEventListener('DOMContentLoaded',function(){
         // 지표 키워드를 못 찾았으면 사용자에게 명확히 묻기 (이전엔 'ctr'로 강제 → CEO 16:48 피드백)
         return {reply:'어떤 지표를 그릴지 알아듣지 못했어요. 다음 중 하나로 다시 말해주세요:<br>· 노출수, 클릭수, 클릭률(CTR), 집행액, 전환수, CPC, CPM, ROAS, 매출<br>· 조회수(영상 재생), 도달수, 완료율(VTR), 링크 클릭<br><br>예) "매체별 <b>조회수</b> 차트 그려줘"'};
       }
-      var name=q.replace(/만들어줘|만들어|만들어줘요|추가해줘|추가|그려줘|차트|그래프/g,'').trim()||(dim+' · '+idxs[0]);
+      // 차트 이름 자동 표준화: 사용자 문장 무시하고 디멘션·지표 라벨로 깔끔하게 생성
+      // 예: '매체별 조회수 비교', '광고 상품별 ROAS 추이', 'Phase별 도달, 빈도 비교'
+      var _dimLbl = findDimLabel(dim);
+      var _idxLbls = idxs.map(function(i){var m=findIdx(i);return m?m.label:i;});
+      var _modeWord = (chartType==='line')?'추이':(chartType==='radar'?'레이더':(chartType==='doughnut'?'구성비':'비교'));
+      var name = _dimLbl + '별 ' + _idxLbls.join(', ') + ' ' + _modeWord;
       var ucPage=(page==='phase')?'phase':'daily';
       var newId='uc_'+Math.random().toString(36).slice(2,9);
       return {reply:'새 차트를 추가했습니다. <b>'+name+'</b> ('+chartType+', X: '+findDimLabel(dim)+', Y: '+idxs.map(function(i){var m=findIdx(i);return m?m.label:i;}).join(', ')+')',
         action:function(){
-          var key='inn_rp_uc_v1';
+          var key='inn_rp_uc_v2';
           var store={};try{store=JSON.parse(localStorage.getItem(key)||'{}');}catch(e){}
           if(!store[ucPage])store[ucPage]=[];
           store[ucPage].push({id:newId,name:name,type:chartType,dim:dim,idxs:idxs});
@@ -2783,7 +2788,7 @@ window.addEventListener('DOMContentLoaded',function(){
     var parts=undoId.split(':');var kind=parts[0];
     if(kind==='chart'){
       var page=parts[1];var id=parts[2];
-      var key='inn_rp_uc_v1';var store={};try{store=JSON.parse(localStorage.getItem(key)||'{}');}catch(e){}
+      var key='inn_rp_uc_v2';var store={};try{store=JSON.parse(localStorage.getItem(key)||'{}');}catch(e){}
       if(store[page])store[page]=store[page].filter(function(c){return c.id!==id;});
       localStorage.setItem(key,JSON.stringify(store));
       if(typeof renderUserCharts==='function')renderUserCharts(page);
