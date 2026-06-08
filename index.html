@@ -256,6 +256,11 @@ tbody tr.total-row td{font-weight:700;background:#FAFAFA}
 .mc-item.all{font-weight:600;border-bottom:1px solid var(--bdr)}
 /* === 디멘션/인덱스 선택 패널 === */
 .di-panel{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center;padding:12px 16px;background:#F9FAFB;border:1px solid var(--bdr)}
+.di-panel.di-compact{padding:8px 12px;margin-bottom:10px;gap:6px;font-size:11px;background:#F3F4F6;border:none;border-bottom:1px dashed var(--bdr)}
+.di-compact .di-lbl{font-size:10px}
+.di-compact .di-pill{padding:3px 8px;font-size:11px;border-radius:10px}
+.di-compact .di-addbtn{font-size:10px;padding:3px 7px}
+.di-compact .di-tool-btn{font-size:10px;padding:3px 7px}
 .di-grp{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .di-lbl{font-size:11px;font-weight:700;color:#555;margin-right:4px;letter-spacing:.04em}
 .di-pill{display:inline-flex;align-items:center;gap:4px;padding:5px 10px;background:#fff;border:1px solid var(--bdr);font-size:12px;color:#374151;cursor:pointer;transition:all .15s;border-radius:14px;user-select:none}
@@ -976,8 +981,8 @@ body.dark .bm-item:hover{background:var(--bg-soft2)}
 
     <!-- Charts -->
     <div class="chart-two-col">
-      <div class="di-panel" id="phase-trend-di"></div>
       <div class="chart-card">
+        <div class="di-panel di-compact" id="phase-trend-di"></div>
         <div class="ccard-hd">
           <div>
             <div class="ccard-t">Phase별 CTR 추이</div>
@@ -986,8 +991,8 @@ body.dark .bm-item:hover{background:var(--bg-soft2)}
         </div>
         <div class="chart-wrap-sm"><canvas id="phase-trend-chart"></canvas></div>
       </div>
-      <div class="di-panel" id="phase-radar-di"></div>
       <div class="chart-card">
+        <div class="di-panel di-compact" id="phase-radar-di"></div>
         <div class="ccard-hd">
           <div>
             <div class="ccard-t">Phase 달성률 레이더</div>
@@ -1002,6 +1007,7 @@ body.dark .bm-item:hover{background:var(--bg-soft2)}
     <div class="sec-hd">
       <span class="sec-t">Phase 비교 분석</span>
     </div>
+    <div class="di-panel di-compact" id="phase-cmp-di"></div>
     <div class="table-tools" data-tools-for="phase-cmp-table"></div>
     <div class="twrap">
       <table id="phase-cmp-table">
@@ -1753,7 +1759,8 @@ window.DI_STATE = {
   'daily-sum-di':{dims:['media','date'],idxs:['costs_index','impressions_index','clicks_index']},
   'daily-tbl-di':{dims:['media'],idxs:['costs','impressions','clicks','ctr']},
   'phase-trend-di':{dims:['date','phase'],idxs:['ctr']},
-  'phase-radar-di':{dims:['media','phase'],idxs:['costs_index','impressions_index','clicks_index','conversions_index']}
+  'phase-radar-di':{dims:['media','phase'],idxs:['costs_index','impressions_index','clicks_index','conversions_index']},
+  'phase-cmp-di':{dims:['phase'],idxs:['costs','impressions','ctr']}
 };
 function findIdxLabel(id){
   for(var g=0;g<window.IDX_CATALOG.length;g++){
@@ -1846,13 +1853,19 @@ function applyDiChange(panelId){
   if(panelId==='daily-sum-di'&&typeof window.renderDailySum==='function')window.renderDailySum();
   if(panelId==='daily-tbl-di'&&typeof window.renderDailyTbl==='function')window.renderDailyTbl();
   if((panelId==='phase-trend-di'||panelId==='phase-radar-di')&&typeof window.renderPhaseCharts==='function')window.renderPhaseCharts();
+  if(panelId==='phase-cmp-di'&&typeof window.renderPhaseCmp==='function')window.renderPhaseCmp();
 }
 document.addEventListener('click',function(e){
   if(e.target.closest('.di-add'))return;
   document.querySelectorAll('.di-addpop.show').forEach(function(p){p.classList.remove('show');});
 });
 window.addEventListener('DOMContentLoaded',function(){
-  ['daily-sum-di','daily-tbl-di','phase-trend-di','phase-radar-di'].forEach(function(p){renderDiPanel(p);});
+  ['daily-sum-di','daily-tbl-di','phase-trend-di','phase-radar-di','phase-cmp-di'].forEach(function(p){renderDiPanel(p);});
+  // 초기 렌더
+  if(typeof window.renderDailySum==='function')window.renderDailySum();
+  if(typeof window.renderDailyTbl==='function')window.renderDailyTbl();
+  if(typeof window.renderPhaseCharts==='function')window.renderPhaseCharts();
+  if(typeof window.renderPhaseCmp==='function')window.renderPhaseCmp();
 });
 </script>
 
@@ -2026,6 +2039,56 @@ window.addEventListener('DOMContentLoaded',function(){
     attachSortableTo(t);
     // 변화 시각화: 카드 깜빡임
     var wrap=t.closest('.chart-card')||t.parentElement;
+    if(wrap){wrap.classList.add('di-flash');setTimeout(function(){wrap.classList.remove('di-flash');},700);}
+  };
+
+  // ---------- renderPhaseCmp ----------
+  // CEO 2026-06-08 14:38: Phase 비교 분석 표를 디멘션·지표 동적 패널로 변경
+  window.renderPhaseCmp=function(){
+    var t=document.getElementById('phase-cmp-table');if(!t)return;
+    var st=window.DI_STATE['phase-cmp-di'];if(!st)return;
+    var firstDim=(st.dims&&st.dims[0])||'phase';
+    var dimMeta=null;
+    for(var i=0;i<window.DIM_CATALOG.length;i++){if(window.DIM_CATALOG[i].id===firstDim){dimMeta=window.DIM_CATALOG[i];break;}}
+    var dimLabel=dimMeta?dimMeta.label:'Phase';
+    var rowLabels=labelsForDim(firstDim);
+    // 헤더: 1열(dim) + 기간 + 각 지표×(목표/실적/달성률)
+    var thead='<tr><th class="sortable" data-col="0">'+dimLabel+' <span class="arrow">↕</span></th><th>기간</th>';
+    st.idxs.forEach(function(idxId){
+      var meta=findIdx(idxId);if(!meta)return;
+      var unit=unitFor(idxId);
+      var lbl=meta.label+(unit?(' ('+unit+')'):'');
+      thead+='<th>'+lbl+' 목표</th><th>'+lbl+' 실적</th><th>'+lbl+' 달성률</th>';
+    });
+    thead+='</tr>';
+    // 기간 매핑(phase 외엔 '-')
+    var periods={'사전 준비':'06/01~06/07','런칭':'06/08~06/14','성수기':'06/15~06/25','마무리':'06/26~06/30'};
+    var rows='';
+    rowLabels.forEach(function(m,ri){
+      var rowCls=(m==='성수기')?'total-row':'';
+      var tr='<tr class="'+rowCls+'"><td><strong>'+m+(m==='성수기'?' ★현재':'')+'</strong></td><td>'+(periods[m]||'-')+'</td>';
+      st.idxs.forEach(function(idxId){
+        var unit=unitFor(idxId);
+        function fmtVal(v){
+          if(unit==='%')return v.toFixed(2)+'%';
+          if(unit==='₩')return '₩'+(Math.round(v)).toLocaleString();
+          return Math.round(v).toLocaleString();
+        }
+        var target,actual;
+        if(unit==='%'){target=rand(1.5,3.5);actual=target*rand(0.7,1.3);}
+        else if(unit==='₩'){target=rand(20,80)*1e6;actual=target*rand(0.7,1.1);}
+        else{target=Math.round(rand(2,7)*1e6);actual=Math.round(target*rand(0.65,1.15));}
+        var rate=(actual/target)*100;
+        var clr=(rate>=95)?'#22C55E':(rate>=80?'':'#EF4444');
+        var rateHtml=clr?('<span style="color:'+clr+'">'+rate.toFixed(1)+'%</span>'):(rate.toFixed(1)+'%');
+        tr+='<td>'+fmtVal(target)+'</td><td>'+fmtVal(actual)+'</td><td>'+rateHtml+'</td>';
+      });
+      tr+='</tr>';
+      rows+=tr;
+    });
+    t.innerHTML='<thead>'+thead+'</thead><tbody>'+rows+'</tbody>';
+    if(typeof attachSortableTo==='function')attachSortableTo(t);
+    var wrap=t.closest('.twrap');
     if(wrap){wrap.classList.add('di-flash');setTimeout(function(){wrap.classList.remove('di-flash');},700);}
   };
 
@@ -2311,7 +2374,7 @@ window.addEventListener('DOMContentLoaded',function(){
   function boot(){
     // initial render of all DI-driven content
     try{
-      ['daily-sum-di','daily-tbl-di','phase-trend-di','phase-radar-di'].forEach(function(p){if(typeof renderDiPanel==='function')renderDiPanel(p);});
+      ['daily-sum-di','daily-tbl-di','phase-trend-di','phase-radar-di','phase-cmp-di'].forEach(function(p){if(typeof renderDiPanel==='function')renderDiPanel(p);});
       if(window.renderDailySum)window.renderDailySum();
       if(window.renderDailyTbl)window.renderDailyTbl();
       // phase charts get rendered on initPhaseCharts page load
