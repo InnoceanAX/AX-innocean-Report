@@ -2590,7 +2590,27 @@ window.addEventListener('DOMContentLoaded',function(){
   };
 
 
-  // === 카탈로그 기반 자연어 매칭 (CEO 2026-06-08 16:51) ===
+  // === % 단위 지표 판별 (CEO 2026-06-08 17:03) ===
+  // ID/label 패턴으로 비율 지표 추론
+  var _PCT_ID_PATTERNS = [
+    /^ctr/, /^vtr/, /_rate$/, /_index$/, /^conversion_rate/, /roas/,
+    /completion/, /share$/, /ratio/, /가격/i, /비율/, /률/, /달성/
+  ];
+  function isPctIdx(idxId){
+    if(!idxId) return false;
+    var id = String(idxId).toLowerCase();
+    // ID 패턴
+    for(var i=0;i<_PCT_ID_PATTERNS.length;i++){ if(_PCT_ID_PATTERNS[i].test(id)) return true; }
+    // 카탈로그 라벨 검사 (% / 율 / 률 / 달성률)
+    var m = (typeof findIdx==='function') ? findIdx(idxId) : null;
+    if(m && m.label){
+      if(/%|율|률|달성/.test(m.label)) return true;
+    }
+    return false;
+  }
+  window.isPctIdx = isPctIdx;
+
+    // === 카탈로그 기반 자연어 매칭 (CEO 2026-06-08 16:51) ===
   // 모든 IDX_CATALOG / DIM_CATALOG에서 라벨/ID를 자동 추출하여 매칭
   function normalizeStr(s){
     return (s||'').toLowerCase()
@@ -2693,6 +2713,94 @@ window.addEventListener('DOMContentLoaded',function(){
   // ---------- 룰 기반 자연어 파서 ----------
   function aiParse(q,page){
     var t=q.toLowerCase().replace(/\s+/g,' ');
+
+    // === 0. 기존 차트 수정/삭제 (CEO 2026-06-08 17:04) ===
+    // "마지막 차트 ...", "방금 차트 ...", "{이름} 차트 ..." 패턴
+    var _editMatch = /(마지막|방금|최근)\s*차트/.test(t);
+    var _nameMatch = null;
+    if(!_editMatch){
+      // 이름 기반: "매체별 조회수 비교 차트 막대로" 등 — 이름 부분 추출
+      var m2 = t.match(/(.+?)\s*차트\s*(.+)$/);
+      if(m2 && /(바꿔|변경|수정|추가|삭제|제거|지워|없애)/.test(m2[2])){
+        _nameMatch = m2[1].trim();
+      }
+    }
+    var _isDelete = /(삭제|제거|지워|없애)/.test(t);
+    var _isEdit = _editMatch || _nameMatch;
+
+    if(_isEdit){
+      var ucPage = (page==='phase')?'phase':'daily';
+      var key='inn_rp_uc_v2';
+      var store={}; try{store=JSON.parse(localStorage.getItem(key)||'{}');}catch(e){}
+      var list = store[ucPage]||[];
+      if(!list.length) return {reply:'수정할 차트가 없어요. 먼저 차트를 추가해 주세요.'};
+      // 대상 카드 선택
+      var target = null;
+      if(_nameMatch){
+        // 이름 부분 매칭
+        var nm = _nameMatch.replace(/\s+/g,'');
+        target = list.find(function(c){return (c.name||'').replace(/\s+/g,'').toLowerCase().indexOf(nm)>=0;});
+      }
+      if(!target) target = list[list.length-1]; // 마지막 차트
+      var tIdx = list.indexOf(target);
+
+      if(_isDelete){
+        list.splice(tIdx,1);
+        store[ucPage]=list; localStorage.setItem(key,JSON.stringify(store));
+        if(typeof renderUserCharts==='function') renderUserCharts(ucPage);
+        return {reply:'차트 <b>'+target.name+'</b>을(를) 삭제했어요.', actionLabel:'차트 삭제'};
+      }
+
+      // 차트 타입 변경
+      var newType = null;
+      if(/막대|bar/.test(t)) newType='bar';
+      else if(/도넛|doughnut|원형|pie|파이/.test(t)) newType='doughnut';
+      else if(/레이더|radar/.test(t)) newType='radar';
+      else if(/라인|line|추이|선그래프|선 그래프/.test(t)) newType='line';
+
+      // 디멘션·지표 매칭
+      var addM = matchFromCatalog(t);
+      var changed = [];
+
+      if(newType && newType!==target.type){
+        target.type = newType;
+        changed.push('타입 → '+newType);
+      }
+      if(addM.dim && /(디멘션|구분|축|x축|기준)/.test(t)){
+        target.dim = addM.dim;
+        changed.push('디멘션 → '+(typeof findDimLabel==='function'?findDimLabel(addM.dim):addM.dim));
+      } else if(addM.dim && !changed.length && !addM.idxs.length){
+        // 명시 키워드 없어도 디멘션만 매칭됐으면 dim 교체로 간주
+        target.dim = addM.dim;
+        changed.push('디멘션 → '+(typeof findDimLabel==='function'?findDimLabel(addM.dim):addM.dim));
+      }
+      if(addM.idxs.length){
+        if(/(추가|넣어|포함)/.test(t)){
+          addM.idxs.forEach(function(i){ if((target.idxs||[]).indexOf(i)<0) target.idxs.push(i); });
+          changed.push('지표 추가 → '+addM.idxs.map(function(i){var m=findIdx(i);return m?m.label:i;}).join(', '));
+        } else if(/(제거|빼|없애|삭제)/.test(t)){
+          target.idxs = (target.idxs||[]).filter(function(i){return addM.idxs.indexOf(i)<0;});
+          changed.push('지표 제거');
+        } else {
+          // 그냥 지표 명시면 교체
+          target.idxs = addM.idxs;
+          changed.push('지표 → '+addM.idxs.map(function(i){var m=findIdx(i);return m?m.label:i;}).join(', '));
+        }
+      }
+
+      if(!changed.length) return {reply:'어떤 부분을 바꿀지 알려주세요. 예: "마지막 차트 도넛으로 바꿔줘", "마지막 차트 디멘션을 광고 상품으로", "마지막 차트에 ROAS 추가"'};
+
+      // 이름도 재표준화
+      var _dimL = (typeof findDimLabel==='function')?findDimLabel(target.dim):target.dim;
+      var _idxL = (target.idxs||[]).map(function(i){var m=findIdx(i);return m?m.label:i;});
+      var _mw = (target.type==='line')?'추이':(target.type==='radar'?'레이더':(target.type==='doughnut'?'구성비':'비교'));
+      target.name = _dimL+'별 '+_idxL.join(', ')+' '+_mw;
+
+      store[ucPage]=list; localStorage.setItem(key,JSON.stringify(store));
+      if(typeof renderUserCharts==='function') renderUserCharts(ucPage);
+      return {reply:'차트 <b>'+target.name+'</b> 수정 완료 ('+changed.join(' / ')+')', actionLabel:'차트 수정'};
+    }
+
     // 1. 다크 모드
     if(/다크|dark|다크모드/.test(t)){
       var on=/켜|설정|해줘|키|바꿔|on|롤|클/.test(t)||true;
@@ -2711,10 +2819,18 @@ window.addEventListener('DOMContentLoaded',function(){
       var matched = matchFromCatalog(t);
       var dim = matched.dim;
       var idxs = matched.idxs;
-      var chartType='line';
-      if(/막대|bar|비교/.test(t))chartType='bar';
-      if(/도넛|doughnut|원형|pie|파이/.test(t))chartType='doughnut';
-      if(/레이더|radar/.test(t))chartType='radar';
+      // 차트 타입: 사용자 명시 우선 / 미명시면 지표 단위로 자동 (% → line, 정수/금액 → bar)
+      var chartType = null;
+      var _typeExplicit = false;
+      if(/막대|bar/.test(t)){chartType='bar';_typeExplicit=true;}
+      if(/도넛|doughnut|원형|pie|파이/.test(t)){chartType='doughnut';_typeExplicit=true;}
+      if(/레이더|radar/.test(t)){chartType='radar';_typeExplicit=true;}
+      if(/라인|line|추이|선그래프|선 그래프/.test(t)){chartType='line';_typeExplicit=true;}
+      // 명시 없으면 지표 단위로 자동 선택 (CEO 17:03)
+      if(!chartType){
+        var _hasPct = idxs.some(isPctIdx);
+        chartType = _hasPct ? 'line' : 'bar';
+      }
       if(!dim)dim=(chartType==='bar'||chartType==='doughnut')?'media':'date';
       if(!idxs.length){
         // 지표 키워드를 못 찾았으면 사용자에게 명확히 묻기 (이전엔 'ctr'로 강제 → CEO 16:48 피드백)
