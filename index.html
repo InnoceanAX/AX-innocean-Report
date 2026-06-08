@@ -210,6 +210,69 @@ tbody tr.total-row td{font-weight:700;background:#FAFAFA}
 .chart-two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
 @media(max-width:1024px){.cgrid2{grid-template-columns:1fr}.sum-grid{grid-template-columns:1fr 1fr}.ph-kpi-grid{grid-template-columns:1fr 1fr}.form-grid{grid-template-columns:1fr}.chart-two-col{grid-template-columns:1fr}}
 .resize-handle{width:6px;background:transparent;cursor:col-resize;flex-shrink:0;position:relative;z-index:5;transition:background .2s}.resize-handle:hover,.resize-handle.active{background:#E5E7EB}
+
+/* === AI 추천 질문 칩 === */
+.sqchips{padding:14px 16px;background:linear-gradient(135deg,#EEF2FF 0%,#F5F3FF 50%,#FDF2F8 100%);border-top:1px solid rgba(79,70,229,.12);flex-shrink:0;position:relative}
+.sqhd{display:flex;align-items:center;gap:6px;margin-bottom:10px}
+.sqlbl{font-size:11px;font-weight:700;background:linear-gradient(135deg,#4F46E5,#7C3AED);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:.04em}
+.sqtgl{position:absolute;top:8px;right:8px;background:#fff;border:1px solid rgba(79,70,229,.2);cursor:pointer;font-size:10px;color:#4F46E5;width:24px;height:24px;display:flex;align-items:center;justify-content:center;transition:all .3s;border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.sqtgl:hover{background:#4F46E5;color:#fff;border-color:#4F46E5}
+.sqtgl.up{transform:rotate(180deg)}
+.sqbtns{display:flex;gap:8px;flex-wrap:wrap}
+.sqbtns.hide{display:none}
+.sqchip{background:rgba(255,255,255,.85);backdrop-filter:blur(4px);border:1px solid rgba(79,70,229,.15);padding:7px 16px;font-size:12px;font-weight:500;color:#4338CA;cursor:pointer;font-family:"Pretendard Variable","Pretendard","Noto Sans KR",sans-serif;transition:all .25s;border-radius:20px;white-space:nowrap;box-shadow:0 1px 3px rgba(79,70,229,.08)}
+.sqchip:hover{background:linear-gradient(135deg,#4F46E5,#7C3AED);color:#fff;border-color:transparent;box-shadow:0 3px 12px rgba(79,70,229,.3);transform:translateY(-1px)}
+/* Follow-up suggestions */
+.chat-suggestions{padding:12px 16px;background:#F9FAFB;border-radius:0;border:1px solid #E5E7EB;margin-top:4px}
+.sug-btn{display:block;width:100%;text-align:left;background:none;border:1px solid #E5E7EB;padding:8px 12px;margin-bottom:6px;font-size:13px;color:#374151;cursor:pointer;font-family:"Pretendard Variable","Pretendard","Noto Sans KR",sans-serif;transition:all .15s;border-radius:0}
+.sug-btn:hover{background:#000;color:#fff;border-color:#000}
+.sug-btn:last-child{margin-bottom:0}
+/* Chat msg unified */
+.chat-msg{display:flex;gap:10px;margin-bottom:14px}
+.chat-msg.user{flex-direction:row-reverse}
+.chat-msg .cava{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.chat-msg.bot .cava{background:#000;color:#fff}
+.chat-msg.user .cava{background:var(--ind);color:#fff}
+.chat-msg .cbubb{padding:12px 14px;font-size:13px;line-height:1.6;max-width:320px;word-break:break-word}
+.chat-msg.bot .cbubb{background:#F3F4F6;color:#333;border-radius:0 8px 8px 8px}
+.chat-msg.user .cbubb{background:var(--ind);color:#fff;border-radius:8px 0 8px 8px}
+.chat-msg .ctm{font-size:10px;color:#9CA3AF;margin-top:4px}
+.chat-msg.user .ctm{text-align:right}
+.tdots{display:flex;gap:4px;padding:4px 0}
+.tdots span{width:6px;height:6px;background:#999;border-radius:50%;animation:bnc 1.2s infinite}
+.tdots span:nth-child(2){animation-delay:.2s}
+.tdots span:nth-child(3){animation-delay:.4s}
+@keyframes bnc{0%,80%,100%{transform:scale(.7);opacity:.5}40%{transform:scale(1);opacity:1}}
+/* === 매체 다중선택 드롭다운 === */
+.mc-wrap{position:relative;display:inline-block;width:100%}
+.mc-btn{width:100%;border:1px solid var(--bdr);background:#fff;padding:8px 12px;font-size:13px;color:#000;cursor:pointer;display:flex;align-items:center;justify-content:space-between;font-family:inherit;height:36px;text-align:left}
+.mc-btn:hover{border-color:#000}
+.mc-btn .mc-caret{font-size:10px;color:#767676;margin-left:8px}
+.mc-pop{position:absolute;top:100%;left:0;right:0;margin-top:2px;background:#fff;border:1px solid var(--bdr);box-shadow:0 4px 12px rgba(0,0,0,.08);z-index:50;max-height:240px;overflow-y:auto;display:none}
+.mc-pop.show{display:block}
+.mc-item{padding:8px 12px;display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;user-select:none}
+.mc-item:hover{background:#F3F4F6}
+.mc-item input[type=checkbox]{accent-color:var(--ind);width:14px;height:14px;cursor:pointer}
+.mc-item.all{font-weight:600;border-bottom:1px solid var(--bdr)}
+/* === 디멘션/인덱스 선택 패널 === */
+.di-panel{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center;padding:12px 16px;background:#F9FAFB;border:1px solid var(--bdr)}
+.di-grp{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.di-lbl{font-size:11px;font-weight:700;color:#555;margin-right:4px;letter-spacing:.04em}
+.di-pill{display:inline-flex;align-items:center;gap:4px;padding:5px 10px;background:#fff;border:1px solid var(--bdr);font-size:12px;color:#374151;cursor:pointer;transition:all .15s;border-radius:14px;user-select:none}
+.di-pill:hover{border-color:#000}
+.di-pill.on{background:var(--ind);color:#fff;border-color:var(--ind)}
+.di-pill.on:hover{background:var(--ind2)}
+.di-pill .x{font-size:10px;opacity:.7;margin-left:2px}
+.di-add{position:relative}
+.di-addbtn{background:#fff;border:1px dashed #9CA3AF;padding:5px 10px;font-size:12px;color:#555;cursor:pointer;border-radius:14px}
+.di-addbtn:hover{border-color:#000;color:#000}
+.di-addpop{position:absolute;top:100%;left:0;margin-top:4px;background:#fff;border:1px solid var(--bdr);box-shadow:0 4px 12px rgba(0,0,0,.1);z-index:50;min-width:180px;max-height:280px;overflow-y:auto;display:none;padding:6px 0}
+.di-addpop.show{display:block}
+.di-addpop .it{padding:7px 12px;font-size:13px;color:#374151;cursor:pointer;user-select:none;display:flex;align-items:center;gap:6px}
+.di-addpop .it:hover{background:#F3F4F6}
+.di-addpop .it.added{color:#9CA3AF;cursor:default;background:#FAFAFA}
+.di-addpop .it.added::after{content:'\2713';margin-left:auto;font-size:11px}
+
 </style>
 </head>
 <body>
@@ -272,6 +335,16 @@ tbody tr.total-row td{font-weight:700;background:#FAFAFA}
           <span class="sbb">AI-POWERED</span>
         </div>
         <div class="chat-msgs" id="chat-msgs"></div>
+        <div class="sqchips" id="rp-sqchips">
+          <div class="sqhd"><span class="sqlbl">AI 추천 질문</span><button class="sqtgl" id="rp-sqtgl" onclick="tglRpSq()" title="접기/펼치기">&#x25BC;</button></div>
+          <div class="sqbtns" id="rp-sqbtns">
+            <button class="sqchip" onclick="chipRp('Meta CTR 하락 원인 분석해줘')">CTR 이상치</button>
+            <button class="sqchip" onclick="chipRp('전체 매체 목표 대비 달성률 보여줘')">달성률 요약</button>
+            <button class="sqchip" onclick="chipRp('Google과 Meta 성과 비교')">매체 비교</button>
+            <button class="sqchip" onclick="chipRp('Phase 1 vs Phase 2 효율 비교')">Phase 비교</button>
+            <button class="sqchip" onclick="chipRp('CPM 트렌드 분석')">CPM 트렌드</button>
+          </div>
+        </div>
         <div class="cinput-wrap">
           <div class="cinput-row">
             <textarea class="cinput" id="chat-input" placeholder="캠페인 성과에 대해 질문해주세요..." rows="1" onkeydown="handleChatKey(event)"></textarea>
@@ -537,12 +610,18 @@ tbody tr.total-row td{font-weight:700;background:#FAFAFA}
         </div>
         <div class="fg">
           <label class="flbl">매체</label>
-          <select class="fsel" id="daily-media" multiple style="height:36px">
-            <option selected>Google</option>
-            <option selected>Meta</option>
-            <option selected>네이버</option>
-            <option selected>카카오</option>
-          </select>
+          <div class="mc-wrap" id="daily-media-wrap">
+            <button type="button" class="mc-btn" id="daily-media-btn" onclick="toggleMcPop('daily-media')">
+              <span id="daily-media-label">전체 매체</span><span class="mc-caret">▼</span>
+            </button>
+            <div class="mc-pop" id="daily-media-pop">
+              <label class="mc-item all"><input type="checkbox" id="daily-media-all" checked onchange="mcToggleAll('daily-media')"> 전체 선택</label>
+              <label class="mc-item"><input type="checkbox" class="mc-cb" data-mc="daily-media" value="Google" checked onchange="mcUpdate('daily-media')"> Google</label>
+              <label class="mc-item"><input type="checkbox" class="mc-cb" data-mc="daily-media" value="Meta" checked onchange="mcUpdate('daily-media')"> Meta</label>
+              <label class="mc-item"><input type="checkbox" class="mc-cb" data-mc="daily-media" value="네이버" checked onchange="mcUpdate('daily-media')"> 네이버</label>
+              <label class="mc-item"><input type="checkbox" class="mc-cb" data-mc="daily-media" value="카카오" checked onchange="mcUpdate('daily-media')"> 카카오</label>
+            </div>
+          </div>
         </div>
         <div class="fg">
           <label class="flbl">집계 단위</label>
@@ -578,10 +657,11 @@ tbody tr.total-row td{font-weight:700;background:#FAFAFA}
     </div>
 
     <!-- Summary KPI -->
-    <div class="sec-hd" style="margin-bottom:14px">
+    <div class="sec-hd" style="margin-bottom:10px">
       <span class="sec-t">성과 요약 — 목표 대비 달성률</span>
       <span style="font-size:12px;color:#767676">2026-06-01 ~ 2026-06-04</span>
     </div>
+    <div class="di-panel" id="daily-sum-di"></div>
     <div class="sum-grid">
       <div class="sum-card">
         <div class="sum-lbl">예산 집행률</div>
@@ -620,7 +700,7 @@ tbody tr.total-row td{font-weight:700;background:#FAFAFA}
         <button class="dbtn" onclick="openAlertModal()">⚙ 알림 규칙 설정</button>
       </div>
       <div class="alert-item">
-        <span class="alert-tag ai-tag">⚡ AI 감지</span>
+        <span class="alert-tag ai-tag">✦ AI 감지</span>
         <span class="alert-msg">Meta CTR이 전일 대비 -32% 하락. 광고 세트 'Tucson_Display_A' 성과 저하가 원인으로 추정됩니다. 해당 광고 세트의 입찰가 검토 또는 크리에이티브 교체를 권장합니다.</span>
       </div>
       <div class="alert-item">
@@ -634,6 +714,7 @@ tbody tr.total-row td{font-weight:700;background:#FAFAFA}
       <span class="sec-t">매체별 성과 분석</span>
       <button class="dbtn pri" onclick="showToast('Excel 파일을 다운로드합니다.')">Excel 다운로드</button>
     </div>
+    <div class="di-panel" id="daily-tbl-di"></div>
     <div class="twrap">
       <table>
         <thead>
@@ -759,6 +840,7 @@ tbody tr.total-row td{font-weight:700;background:#FAFAFA}
 
     <!-- Charts -->
     <div class="chart-two-col">
+      <div class="di-panel" id="phase-trend-di"></div>
       <div class="chart-card">
         <div class="ccard-hd">
           <div>
@@ -768,6 +850,7 @@ tbody tr.total-row td{font-weight:700;background:#FAFAFA}
         </div>
         <div class="chart-wrap-sm"><canvas id="phase-trend-chart"></canvas></div>
       </div>
+      <div class="di-panel" id="phase-radar-di"></div>
       <div class="chart-card">
         <div class="ccard-hd">
           <div>
@@ -1019,49 +1102,13 @@ function appendMsg(role, text, time, animate) {
   container.scrollTop = container.scrollHeight;
 }
 
-function showTyping() {
-  const container = document.getElementById('chat-msgs');
-  const div = document.createElement('div');
-  div.className = 'cmsg ai';
-  div.id = 'typing-indicator';
-  div.innerHTML = '<div class="cav">AI</div><div><div class="cbubble"><div class="tdots"><span></span><span></span><span></span></div></div></div>';
-  container.appendChild(div);
-  container.scrollTop = container.scrollHeight;
-}
 
-function hideTyping() {
-  const el = document.getElementById('typing-indicator');
-  if (el) el.remove();
-}
 
-function handleChatKey(e) {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    sendChat();
-  }
-}
 
-function sendChat() {
-  const inp = document.getElementById('chat-input');
-  const text = inp.value.trim();
-  if (!text) return;
-  const now = new Date();
-  const t = now.getHours() + ':' + String(now.getMinutes()).padStart(2,'0');
-  appendMsg('user', text, t, true);
-  inp.value = '';
-  showTyping();
-  setTimeout(() => {
-    hideTyping();
-    const replies = [
-      '분석 중입니다. 선택하신 기간의 데이터를 확인해주세요.',
-      '해당 매체의 KPI 트렌드를 확인했습니다. 전반적으로 목표 대비 85% 수준의 성과를 기록하고 있습니다.',
-      '더 상세한 분석이 필요하시면 기간과 매체를 특정해주세요.',
-      '네, 확인했습니다. 미디어믹스 설정에서 Phase별 목표를 조정하는 것을 권장합니다.'
-    ];
-    const reply = replies[Math.floor(Math.random() * replies.length)];
-    appendMsg('ai', reply, t, true);
-  }, 1200);
-}
+
+
+
+
 
 // ─── AI CHARTS ───
 function initAICharts() {
@@ -1370,5 +1417,291 @@ function stopResize(e){
 }
 
 </script>
+
+<script>
+function sendChat(){
+  var inp=document.getElementById('chat-input');var t=(inp.value||'').trim();if(!t)return;
+  inp.value='';if(typeof autoResizeChat==='function')autoResizeChat(inp);
+  addChatMsg('user',t);
+  showTypingChat();
+  setTimeout(function(){hideTypingChat();addChatMsg('bot',genReportReply(t));showSugRp(t);},900+Math.random()*500);
+}
+function handleChatKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();}}
+function autoResizeChat(el){if(!el)return;el.style.height='auto';el.style.height=Math.min(el.scrollHeight,140)+'px';}
+function addChatMsg(role,text,time){
+  var box=document.getElementById('chat-msgs');if(!box)return;
+  var d=document.createElement('div');d.className='chat-msg '+(role==='user'?'user':'bot');
+  var av=role==='user'?'\uB098':'AI';
+  var t=time||new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+  d.innerHTML='<div class="cava">'+av+'</div><div><div class="cbubb">'+text.replace(/\n/g,'<br>')+'</div><div class="ctm">'+t+'</div></div>';
+  box.appendChild(d);box.scrollTop=box.scrollHeight;
+}
+function showTypingChat(){
+  var box=document.getElementById('chat-msgs');if(!box)return;
+  var d=document.createElement('div');d.id='rp_typing';d.className='chat-msg bot';
+  d.innerHTML='<div class="cava">AI</div><div><div class="cbubb"><div class="tdots"><span></span><span></span><span></span></div></div></div>';
+  box.appendChild(d);box.scrollTop=box.scrollHeight;
+}
+function hideTypingChat(){var el=document.getElementById('rp_typing');if(el)el.remove();}
+function showTyping(){showTypingChat();}
+function hideTyping(){hideTypingChat();}
+function chipRp(q){
+  addChatMsg('user',q);showTypingChat();
+  setTimeout(function(){hideTypingChat();addChatMsg('bot',genReportReply(q));showSugRp(q);},900+Math.random()*500);
+}
+function tglRpSq(){
+  var btns=document.getElementById('rp-sqbtns');var tgl=document.getElementById('rp-sqtgl');
+  if(!btns||!tgl)return;btns.classList.toggle('hide');tgl.classList.toggle('up');
+}
+function genReportReply(t){
+  t=(t||'').toLowerCase();
+  if(t.indexOf('ctr')>=0&&(t.indexOf('\uD558\uB77D')>=0||t.indexOf('\uC6D0\uC778')>=0||t.indexOf('meta')>=0))
+    return 'Meta CTR\uC774 \uC804\uC77C \uB300\uBE44 -32% \uD558\uB77D(0.82%)\uD588\uC2B5\uB2C8\uB2E4.\n\n\uC8FC\uC694 \uC6D0\uC778:\n1. \uAD11\uACE0 \uC138\uD2B8 Tucson_Display_A \uC131\uACFC \uC800\uD558 (-58%)\n2. \uD06C\uB9AC\uC5D0\uC774\uD2F0\uBE0C \uD53C\uB85C\uB3C4 \uB204\uC801 (\uB178\uCD9C \uBE48\uB3C4 5.2\uD68C \uB3C4\uB2EC)\n3. \uB3D9\uC2DC\uAC04\uB300 \uACBD\uC7C1 \uC785\uCC30 \uC99D\uAC00\n\n\uAD8C\uC7A5 \uC561\uC158:\n\u2022 \uC785\uCC30\uAC00 -15% \uC870\uC815\n\u2022 \uC2E0\uADDC \uD06C\uB9AC\uC5D0\uC774\uD2F0\uBE0C A/B \uD14C\uC2A4\uD2B8\n\u2022 \uAD11\uACE0 \uC138\uD2B8 \uC7AC\uAD6C\uC131';
+  if(t.indexOf('\uB2EC\uC131\uB960')>=0||(t.indexOf('\uBAA9\uD45C')>=0&&t.indexOf('\uB300\uBE44')>=0))
+    return '\uC804\uCCB4 \uB9E4\uCCB4 \uBAA9\uD45C \uB300\uBE44 \uB2EC\uC131\uB960 \uC694\uC57D (2026-06-01 ~ 2026-06-04):\n\n\u2022 \uC608\uC0B0 \uC9D1\uD589: 73.1% (\u20A9102M / \u20A9140M)\n\u2022 \uB178\uCD9C: 75.3% (12.8M / 17M)\n\u2022 \uD074\uB9AD: 81.2% (105K / 129K)\n\u2022 \uC804\uD658: 68.4% (\uBAA9\uD45C \uBBF8\uB2EC)\n\n\uC778\uC0AC\uC774\uD2B8:\n\u2022 Google\uACFC \uB124\uC774\uBC84\uB294 \uBAA9\uD45C \uCD08\uACFC \uD398\uC774\uC2A4\n\u2022 Meta\uB294 \uC5B4\uC81C CTR \uC774\uC288\uB85C \uD398\uC774\uC2A4 \uB458\uD654\n\u2022 \uCE74\uCE74\uC624\uB294 \uC548\uC815\uC801 (CPA \uAC1C\uC120)';
+  if(t.indexOf('google')>=0&&t.indexOf('meta')>=0)
+    return 'Google vs Meta \uC131\uACFC \uBE44\uAD50 (\uC774\uBC88 \uCE90\uD398\uC778 \uB204\uC801):\n\nGoogle:\n\u2022 CTR 1.42% / CPM \u20A95,240 / CPC \u20A9368\n\u2022 \uAC15\uC810: \uC548\uC815\uC801 CTR, \uAC80\uC0C9 \uC758\uB3C4 \uBA85\uD655\n\nMeta:\n\u2022 CTR 0.82%(\u2193) / CPM \u20A96,180 / CPC \u20A9754\n\u2022 \uAC15\uC810: \uB3C4\uB2EC \uD6A8\uC728, \uC601\uC0C1 VTR \uC6B0\uC218\n\n\uACB0\uB860: \uC778\uC9C0 \uB2E8\uACC4\uB294 Meta, \uC804\uD658 \uB2E8\uACC4\uB294 Google\uB85C \uC608\uC0B0 \uC7AC\uBC30\uBD84 \uAD8C\uC7A5.';
+  if(t.indexOf('phase')>=0)
+    return 'Phase 1 vs Phase 2 \uBE44\uAD50:\n\nPhase 1 (Pre-launch, 5/1~5/15):\n\u2022 \uB178\uCD9C \uB3C4\uB2EC \uD6A8\uC728 \uC6B0\uC218 (CPM \u20A94,180)\n\u2022 Awareness \uC9C0\uD45C +18%\n\nPhase 2 (Launch, 5/16~6/4):\n\u2022 \uC804\uD658 \uBE44\uC911 \uC99D\uAC00 (\uC804\uD658\uC218 +210%)\n\u2022 CPA \u20A912,400 (\uBAA9\uD45C \u20A915,000 \uB300\uBE44 \uC591\uD638)\n\n\uACB0\uB860: Phase \uC804\uD658 \uC2DC\uC810 \uB9E4\uCCB4 \uBC0F\uC2A4 \uC7AC\uC870\uC815\uC774 \uD6A8\uACFC\uC801\uC774\uC5C8\uC2B5\uB2C8\uB2E4.';
+  if(t.indexOf('cpm')>=0)
+    return 'CPM \uD2B8\uB80C\uB4DC \uBD84\uC11D (\uCD5C\uADFC 30\uC77C):\n\n\u2022 \uC804\uCCB4 \uD3C9\uADE0: \u20A95,820 (\uC804\uC6D4 \uB300\uBE44 +4.2%)\n\u2022 Google: \u20A95,240 (\uC548\uC815)\n\u2022 Meta: \u20A96,180 (\u2191 +12%, \uC785\uCC30 \uACBD\uC7C1 \uC99D\uAC00)\n\u2022 \uB124\uC774\uBC84: \u20A94,950 (\u2193 -3%)\n\u2022 \uCE74\uCE74\uC624: \u20A95,610 (\uC548\uC815)\n\n\uAD8C\uC7A5: Meta \uC785\uCC30 \uC804\uB7B5 \uAC80\uD1A0 \uB610\uB294 \uB178\uCD9C \uC2DC\uAC04\uB300 \uC7AC\uC870\uC815.';
+  if(t.indexOf('roas')>=0)
+    return 'ROAS \uBD84\uC11D:\n\n\u2022 \uC804\uCCB4 ROAS: 4.2 (\uBAA9\uD45C 4.0 \uB300\uBE44 +5%)\n\u2022 Google: 5.1 (\uCD5C\uACE0)\n\u2022 Meta: 3.8 (\uBAA9\uD45C \uBBF8\uB2EC)\n\u2022 \uB124\uC774\uBC84: 4.6\n\u2022 \uCE74\uCE74\uC624: 3.9\n\n\uC778\uC0AC\uC774\uD2B8: Google \uC608\uC0B0 \uBE44\uC911 \uD655\uB300 + Meta \uD06C\uB9AC\uC5D0\uC774\uD2F0\uBE0C \uCD5C\uC801\uD654 \uAD8C\uC7A5.';
+  return '\uC9C8\uBB38\uC744 \uB354 \uAD6C\uCCB4\uD654\uD574\uC8FC\uC138\uC694. \uC608: "Meta CTR \uD558\uB77D \uC6D0\uC778", "Google\uACFC Meta ROAS \uBE44\uAD50", "Phase\uBCC4 \uD6A8\uC728 \uBD84\uC11D" \uB4F1.';
+}
+function showSugRp(lastQ){
+  var box=document.getElementById('chat-msgs');if(!box)return;
+  var sug={
+    '\uAE30\uBCF8':['Meta CTR \uD558\uB77D \uC6D0\uC778','\uC804\uCCB4 \uB2EC\uC131\uB960 \uC694\uC57D','Phase 1 vs Phase 2 \uBE44\uAD50'],
+    'CTR':['CTR \uB9E4\uCCB4\uBCC4 \uBE44\uAD50','CTR \uC77C\uBCC4 \uCD94\uC774','\uD06C\uB9AC\uC5D0\uC774\uD2F0\uBE0C \uAD50\uCCB4 \uD6A8\uACFC'],
+    'CPM':['CPM \uB9E4\uCCB4\uBCC4 \uBE44\uAD50','CPM \uD2B8\uB80C\uB4DC \uBD84\uC11D','\uC785\uCC30 \uC804\uB7B5 \uCD94\uCC9C'],
+    'CPA':['CPA \uB9E4\uCCB4\uBCC4 \uBE44\uAD50','CPA \uAC1C\uC120 \uC561\uC158','\uC804\uD658 \uD37C\uB110 \uBD84\uC11D'],
+    'ROAS':['ROAS \uB9E4\uCCB4\uBCC4 \uBE44\uAD50','\uC608\uC0B0 \uC7AC\uBC30\uBD84 \uC2DC\uBBA4\uB808\uC774\uC158','ROAS \uBAA9\uD45C \uB2EC\uC131 \uC2DC\uB098\uB9AC\uC624'],
+    'GOOGLE':['Google \uD0A4\uC6CC\uB4DC \uC131\uACFC','Google \uCE90\uD398\uC778 \uAD6C\uC870 \uBD84\uC11D','Google vs Meta \uBE44\uAD50'],
+    'META':['Meta \uAD11\uACE0 \uC138\uD2B8 \uBD84\uC11D','Meta \uD06C\uB9AC\uC5D0\uC774\uD2F0\uBE0C \uC131\uACFC','Meta \uD0C0\uAC9F\uD305 \uD6A8\uC728'],
+    'PHASE':['Phase \uD0C0\uC784\uB77C\uC778 \uBD84\uC11D','Phase\uBCC4 KPI \uB2EC\uC131\uB960','Phase \uC804\uD658 \uC2DC\uC810 \uCD94\uCC9C'],
+    '\uB2EC\uC131\uB960':['\uB9E4\uCCB4\uBCC4 \uB2EC\uC131\uB960 \uBD84\uC11D','\uC77C\uBCC4 \uB2EC\uC131\uB960 \uCD94\uC774','\uBD80\uC9C4 \uB9E4\uCCB4 \uC6D0\uC778 \uBD84\uC11D']
+  };
+  var key='\uAE30\uBCF8';var Q=(lastQ||'').toUpperCase();
+  for(var k in sug){if(k!=='\uAE30\uBCF8'&&Q.indexOf(k)>=0){key=k;break;}}
+  var items=sug[key];
+  var d=document.createElement('div');d.className='chat-suggestions';
+  d.innerHTML='<div style="font-size:11px;color:#767676;margin-bottom:8px;font-weight:600">\uAD00\uB828 \uC9C8\uBB38</div>'+
+    items.map(function(q){return '<button class="sug-btn" onclick="sugClickRp(this,\''+q.replace(/'/g,"\\'")+'\')">'+q+'</button>';}).join('');
+  box.appendChild(d);box.scrollTop=box.scrollHeight;
+}
+function sugClickRp(btn,q){
+  var wrap=btn.closest('.chat-suggestions');if(wrap)wrap.remove();
+  addChatMsg('user',q);showTypingChat();
+  setTimeout(function(){hideTypingChat();addChatMsg('bot',genReportReply(q));showSugRp(q);},900+Math.random()*500);
+}
+</script>
+
+
+<script>
+function toggleMcPop(id){
+  var pop=document.getElementById(id+'-pop');if(!pop)return;
+  var open=!pop.classList.contains('show');
+  // close all other mc pops first
+  document.querySelectorAll('.mc-pop.show').forEach(function(p){p.classList.remove('show');});
+  if(open)pop.classList.add('show');
+}
+function mcToggleAll(id){
+  var all=document.getElementById(id+'-all');
+  var cbs=document.querySelectorAll('.mc-cb[data-mc="'+id+'"]');
+  cbs.forEach(function(cb){cb.checked=all.checked;});
+  mcUpdate(id);
+}
+function mcUpdate(id){
+  var cbs=document.querySelectorAll('.mc-cb[data-mc="'+id+'"]');
+  var labels=[];var total=cbs.length;var checked=0;
+  cbs.forEach(function(cb){if(cb.checked){labels.push(cb.value);checked++;}});
+  var lbl=document.getElementById(id+'-label');
+  if(lbl){
+    if(checked===total)lbl.textContent='전체 매체';
+    else if(checked===0)lbl.textContent='매체 선택';
+    else if(checked<=2)lbl.textContent=labels.join(', ');
+    else lbl.textContent=labels[0]+' 외 '+(checked-1)+'개';
+  }
+  var all=document.getElementById(id+'-all');if(all)all.checked=(checked===total);
+  if(typeof window.onMcChange==='function')window.onMcChange(id,labels);
+}
+function getMcValues(id){
+  var out=[];document.querySelectorAll('.mc-cb[data-mc="'+id+'"]').forEach(function(cb){if(cb.checked)out.push(cb.value);});return out;
+}
+document.addEventListener('click',function(e){
+  if(e.target.closest('.mc-wrap'))return;
+  document.querySelectorAll('.mc-pop.show').forEach(function(p){p.classList.remove('show');});
+});
+</script>
+
+
+<script>
+/* === 디멘션·인덱스 카탈로그 === */
+window.DIM_CATALOG = [
+  {id:'media',label:'매체',col:'media'},
+  {id:'campaign',label:'캠페인',col:'campaign'},
+  {id:'campaign_id',label:'캠페인 ID',col:'campaign_id'},
+  {id:'brand_name',label:'브랜드',col:'brand_name'},
+  {id:'advertiser',label:'광고주',col:'advertiser_standardized'},
+  {id:'country',label:'국가',col:'country'},
+  {id:'phase',label:'Phase',col:'phase'},
+  {id:'creative',label:'크리에이티브',col:'creative'},
+  {id:'creative_type',label:'크리에이티브 유형',col:'creative_type'},
+  {id:'date',label:'일자',col:'date'},
+  {id:'year',label:'연도',col:'year'},
+  {id:'month',label:'월',col:'month'}
+];
+window.IDX_CATALOG = [
+  {grp:'예산/비용',items:[
+    {id:'costs',label:'집행액',col:'costs'},
+    {id:'costs_krw',label:'집행액 (KRW)',col:'costs_krw'},
+    {id:'costs_usd',label:'집행액 (USD)',col:'costs_usd'},
+    {id:'cpm',label:'CPM',col:'cpm'},
+    {id:'cpc',label:'CPC',col:'cpc'},
+    {id:'cpv',label:'CPV',col:'cpv'},
+    {id:'cpv_thruplay',label:'CPV (ThruPlay)',col:'cpv_video_thruplay'},
+    {id:'cost_per_reach',label:'Cost per Reach',col:'cost_per_reach'}
+  ]},
+  {grp:'노출/도달',items:[
+    {id:'impressions',label:'노출수',col:'impressions'},
+    {id:'reach',label:'도달',col:'reach'},
+    {id:'frequency',label:'빈도',col:'frequency'}
+  ]},
+  {grp:'조회/영상',items:[
+    {id:'views',label:'조회수',col:'views'},
+    {id:'video_views',label:'영상 조회수',col:'video_views'},
+    {id:'view_25',label:'25% 조회수',col:'video_play_25p'},
+    {id:'view_50',label:'50% 조회수',col:'video_play_50p'},
+    {id:'view_75',label:'75% 조회수',col:'video_play_75p'},
+    {id:'view_100',label:'100% 조회수',col:'video_play_100p'},
+    {id:'first_quartile_views',label:'1Q 조회수',col:'first_quartile_views'},
+    {id:'third_quartile_views',label:'3Q 조회수',col:'third_quartile_views'},
+    {id:'thruplay',label:'ThruPlay',col:'video_thruplay'},
+    {id:'vtr',label:'VTR',col:'vtr'},
+    {id:'vtr_25',label:'VTR 25%',col:'vtr_video_play_25p'},
+    {id:'vtr_50',label:'VTR 50%',col:'vtr_video_play_50p'},
+    {id:'vtr_75',label:'VTR 75%',col:'vtr_video_play_75p'},
+    {id:'vtr_100',label:'VTR 100%',col:'vtr_video_play_100p'},
+    {id:'vtr_thruplay',label:'VTR (ThruPlay)',col:'vtr_video_thruplay'},
+    {id:'first_quartile_vtr',label:'1Q VTR',col:'first_quartile_vtr'},
+    {id:'third_quartile_vtr',label:'3Q VTR',col:'third_quartile_vtr'}
+  ]},
+  {grp:'클릭/인터랙션',items:[
+    {id:'clicks',label:'클릭수',col:'clicks'},
+    {id:'link_clicks',label:'링크 클릭수',col:'inline_link_clicks'},
+    {id:'ctr',label:'CTR',col:'ctr'},
+    {id:'ctr_link_click',label:'링크 클릭 CTR',col:'ctr_inline_link_click'},
+    {id:'cpc_link_click',label:'링크 클릭 CPC',col:'cpc_inline_link_click'},
+    {id:'engagements',label:'참여수',col:'post_engagement'}
+  ]},
+  {grp:'전환',items:[
+    {id:'conversions',label:'전환수',col:'conversions'},
+    {id:'conversion_rate',label:'전환율',col:'conversion_rate'}
+  ]},
+  {grp:'인덱스(목표 대비)',items:[
+    {id:'impressions_index',label:'노출 달성률',col:'impressions_index'},
+    {id:'clicks_index',label:'클릭 달성률',col:'clicks_index'},
+    {id:'views_index',label:'조회 달성률',col:'views_index'},
+    {id:'conversions_index',label:'전환 달성률',col:'conversions_index'},
+    {id:'costs_index',label:'예산 집행률',col:'costs_index'}
+  ]}
+];
+/* === 상태: 패널별 선택 dim/idx === */
+window.DI_STATE = {
+  'daily-sum-di':{dims:['media','date'],idxs:['costs_index','impressions_index','clicks_index']},
+  'daily-tbl-di':{dims:['media'],idxs:['costs','impressions','clicks','ctr']},
+  'phase-trend-di':{dims:['date','phase'],idxs:['ctr']},
+  'phase-radar-di':{dims:['media','phase'],idxs:['costs_index','impressions_index','clicks_index','conversions_index']}
+};
+function findIdxLabel(id){
+  for(var g=0;g<window.IDX_CATALOG.length;g++){
+    var items=window.IDX_CATALOG[g].items;
+    for(var i=0;i<items.length;i++){if(items[i].id===id)return items[i].label;}
+  }
+  return id;
+}
+function findDimLabel(id){
+  for(var i=0;i<window.DIM_CATALOG.length;i++){if(window.DIM_CATALOG[i].id===id)return window.DIM_CATALOG[i].label;}
+  return id;
+}
+function renderDiPanel(panelId){
+  var panel=document.getElementById(panelId);if(!panel)return;
+  var st=window.DI_STATE[panelId];if(!st)return;
+  var dimPills=st.dims.map(function(d){
+    return '<span class="di-pill on" onclick="diRemove(\u0027'+panelId+'\u0027,\u0027dim\u0027,\u0027'+d+'\u0027)">'+findDimLabel(d)+' <span class="x">\u2715</span></span>';
+  }).join('');
+  var idxPills=st.idxs.map(function(d){
+    return '<span class="di-pill on" onclick="diRemove(\u0027'+panelId+'\u0027,\u0027idx\u0027,\u0027'+d+'\u0027)">'+findIdxLabel(d)+' <span class="x">\u2715</span></span>';
+  }).join('');
+  panel.innerHTML=
+    '<div class="di-grp"><span class="di-lbl">\uB514\uBA58\uC158</span>'+dimPills+
+    '<span class="di-add"><button class="di-addbtn" onclick="diOpenPop(event,\u0027'+panelId+'\u0027,\u0027dim\u0027)">+ \uCD94\uAC00</button><div class="di-addpop" id="'+panelId+'-dim-pop"></div></span></div>'+
+    '<div class="di-grp"><span class="di-lbl">\uC9C0\uD45C</span>'+idxPills+
+    '<span class="di-add"><button class="di-addbtn" onclick="diOpenPop(event,\u0027'+panelId+'\u0027,\u0027idx\u0027)">+ \uCD94\uAC00</button><div class="di-addpop" id="'+panelId+'-idx-pop"></div></span></div>';
+}
+function diRemove(panelId,kind,id){
+  var st=window.DI_STATE[panelId];if(!st)return;
+  var key=kind==='dim'?'dims':'idxs';
+  st[key]=st[key].filter(function(x){return x!==id;});
+  renderDiPanel(panelId);
+  applyDiChange(panelId);
+}
+function diAdd(panelId,kind,id){
+  var st=window.DI_STATE[panelId];if(!st)return;
+  var key=kind==='dim'?'dims':'idxs';
+  if(st[key].indexOf(id)<0)st[key].push(id);
+  renderDiPanel(panelId);
+  // 팝업 안 닫기 (사용자가 여러 개 추가 가능)
+  diRefreshPop(panelId,kind);
+  applyDiChange(panelId);
+}
+function diOpenPop(ev,panelId,kind){
+  ev.stopPropagation();
+  // close other pops
+  document.querySelectorAll('.di-addpop.show').forEach(function(p){p.classList.remove('show');});
+  var pop=document.getElementById(panelId+'-'+kind+'-pop');if(!pop)return;
+  diRefreshPop(panelId,kind);
+  pop.classList.add('show');
+}
+function diRefreshPop(panelId,kind){
+  var pop=document.getElementById(panelId+'-'+kind+'-pop');if(!pop)return;
+  var st=window.DI_STATE[panelId];if(!st)return;
+  var key=kind==='dim'?'dims':'idxs';
+  var html='';
+  if(kind==='dim'){
+    window.DIM_CATALOG.forEach(function(d){
+      var added=st[key].indexOf(d.id)>=0;
+      html+='<div class="it'+(added?' added':'')+'" '+(added?'':'onclick="diAdd(\u0027'+panelId+'\u0027,\u0027dim\u0027,\u0027'+d.id+'\u0027)"')+'>'+d.label+'</div>';
+    });
+  } else {
+    window.IDX_CATALOG.forEach(function(grp){
+      html+='<div style="padding:6px 12px;font-size:10px;color:#9CA3AF;font-weight:700;letter-spacing:.04em;border-top:1px solid #F3F4F6;margin-top:2px">'+grp.grp+'</div>';
+      grp.items.forEach(function(i){
+        var added=st[key].indexOf(i.id)>=0;
+        html+='<div class="it'+(added?' added':'')+'" '+(added?'':'onclick="diAdd(\u0027'+panelId+'\u0027,\u0027idx\u0027,\u0027'+i.id+'\u0027)"')+'>'+i.label+'</div>';
+      });
+    });
+  }
+  pop.innerHTML=html;
+}
+function applyDiChange(panelId){
+  // 차트/달성률/테이블 재렌더 트리거
+  if(panelId.indexOf('phase')>=0&&typeof window.renderPhaseCharts==='function'){
+    window.renderPhaseCharts();
+  }
+  if(panelId==='daily-sum-di'&&typeof window.renderDailySum==='function'){
+    window.renderDailySum();
+  }
+}
+document.addEventListener('click',function(e){
+  if(e.target.closest('.di-add'))return;
+  document.querySelectorAll('.di-addpop.show').forEach(function(p){p.classList.remove('show');});
+});
+window.addEventListener('DOMContentLoaded',function(){
+  ['daily-sum-di','daily-tbl-di','phase-trend-di','phase-radar-di'].forEach(function(p){renderDiPanel(p);});
+});
+</script>
+
 </body>
 </html>
