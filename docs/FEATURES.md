@@ -121,6 +121,23 @@ hover       : border-color #000
 
 ---
 
+## 차트 범례 규칙 (CEO 2026-06-08 18:57)
+
+- **항상 표시** — `legend.display: true` 고정. 데이터셋 1개여도 레이블 표시.
+- **위치** — 기본 하단 중앙 (`position: 'bottom'`, `align: 'center'`).
+  예외: 도넋(`doughnut`)만 우측 (`position: 'right'`) — 색-라벨 매핑이 직관적.
+- **레이더** 역시 하단 표시.
+- **패딩**: 10px (가독성).
+
+## 차트 다크 모드 (CEO 2026-06-08 18:57)
+
+- `applyChartDefaults()` 함수 — `body.dark` 여부에 따라 Chart.js 전역 설정 분기.
+  - 글자: 라이트 `#374151` / 다크 `#E5E7EB`
+  - borderColor: 라이트 `#E5E7EB` / 다크 `#374151`
+  - tooltip: 라이트 검은 / 다크 진한 네이비
+- `MutationObserver` — `body class` 변경 감지 → 활성 차트 모두 `update('none')`.
+- 사용자가 테마 토글하면 차트 글자 색이 즉시 따라옴.
+
 ## 다크 모드
 
 - 헤더 `theme-btn` 클릭 → `body.dark` 토글.
