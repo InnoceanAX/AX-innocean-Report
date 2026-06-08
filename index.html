@@ -109,6 +109,16 @@ body.dark .sol-divider .sd-lbl{color:var(--text2)}
 .ai-main{flex:1;overflow-y:auto;padding:32px 40px;display:flex;flex-direction:column;gap:20px;background:#FAFAFA}
 .chart-card{background:#fff;border:1px solid var(--border);padding:24px}
 .ccard-hd{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px}
+.cb-type-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.cb-type-card{background:#fff;border:2px solid var(--bdr);padding:14px 8px;border-radius:0;cursor:pointer;text-align:center;transition:all .15s}
+.cb-type-card:hover{border-color:#9CA3AF}
+.cb-type-card.on{border-color:#000;background:#0B0F19;color:#fff}
+.cb-type-card.on .cb-tc-sub{color:#D1D5DB}
+.cb-tc-icon{font-size:22px;line-height:1;margin-bottom:6px}
+.cb-tc-label{font-size:12.5px;font-weight:700}
+.cb-tc-sub{font-size:10.5px;color:#767676;margin-top:3px}
+.cb-tc-recommended{position:relative}
+.cb-tc-recommended::after{content:'추천';position:absolute;top:-6px;right:-6px;background:#4F46E5;color:#fff;font-size:9px;padding:2px 6px;border-radius:8px;font-weight:700;letter-spacing:.3px}
 .ccard-t{font-size:14px;font-weight:700;color:#000;overflow-wrap:break-word;word-break:keep-all;line-height:1.35}
 .ccard-s{font-size:12px;color:var(--text-muted);margin-top:4px;overflow-wrap:break-word;word-break:keep-all;line-height:1.4}
 .cwrap{position:relative;height:260px}
@@ -2469,12 +2479,50 @@ window.addEventListener('DOMContentLoaded',function(){
   // ---------- Chart Builder Modal ----------
   var CB_STATE={page:null,dim:null,idxs:[]};
   window.openChartBuilder=function(page){
-    CB_STATE={page:page,dim:null,idxs:[]};
+    CB_STATE={page:page,dim:null,idxs:[],typeManual:false};
     document.getElementById('cb-name').value='';
     document.getElementById('cb-type').value='line';
+    cbSyncTypeCards();
+    cbUpdateAutoHint();
     cbRenderPills();
     document.getElementById('cb-modal').classList.add('on');
   };
+  window.cbPickType=function(t){
+    CB_STATE.typeManual=true;
+    document.getElementById('cb-type').value=t;
+    cbSyncTypeCards();
+    cbUpdateAutoHint();
+  };
+  function cbSyncTypeCards(){
+    var cur=document.getElementById('cb-type').value;
+    document.querySelectorAll('.cb-type-card').forEach(function(b){
+      if(b.dataset.type===cur)b.classList.add('on');else b.classList.remove('on');
+    });
+  }
+  function cbRecommendType(){
+    // 지표 선택 따라 자동 추천 — 모든 idxs 중 %가 하나라도 있으면 line, 아니면 bar
+    if(!CB_STATE.idxs.length) return null;
+    var anyPct = CB_STATE.idxs.some(function(id){ return (typeof isPctIdx==='function')?isPctIdx(id):false; });
+    return anyPct ? 'line' : 'bar';
+  }
+  function cbUpdateAutoHint(){
+    var hint=document.getElementById('cb-type-auto'); if(!hint) return;
+    var rec = cbRecommendType();
+    document.querySelectorAll('.cb-type-card').forEach(function(b){b.classList.remove('cb-tc-recommended');});
+    if(!rec){ hint.innerHTML=''; return; }
+    var card = document.querySelector('.cb-type-card[data-type="'+rec+'"]');
+    if(card) card.classList.add('cb-tc-recommended');
+    var labelMap={line:'선 그래프', bar:'막대 그래프', doughnut:'도넛', radar:'레이더'};
+    if(!CB_STATE.typeManual){
+      // 자동 적용
+      document.getElementById('cb-type').value=rec;
+      cbSyncTypeCards();
+      hint.innerHTML='지표 단위 기반 자동 추천: <b>'+labelMap[rec]+'</b>';
+    } else {
+      hint.innerHTML='추천: '+labelMap[rec]+' (수동 선택 중)';
+    }
+  }
+  window.cbUpdateAutoHint = cbUpdateAutoHint;
   window.closeChartBuilder=function(){document.getElementById('cb-modal').classList.remove('on');document.querySelectorAll('.cb-mini-pop.show').forEach(function(p){p.classList.remove('show');});};
   function cbRenderPills(){
     var d=document.getElementById('cb-dim-pills');
@@ -2484,8 +2532,8 @@ window.addEventListener('DOMContentLoaded',function(){
     var idxHtml=CB_STATE.idxs.map(function(id){var m=findIdx(id);return '<span class="cb-pill" onclick="cbRemoveIdx(\u0027'+id+'\u0027)">'+(m?m.label:id)+' <span class="x">✕</span></span>';}).join('');
     i.innerHTML=idxHtml+'<button class="cb-add-mini" onclick="cbOpenMiniPop(event,\u0027idx\u0027)">+ 선택</button><div class="cb-mini-pop" id="cb-idx-pop"></div>';
   }
-  window.cbRemoveDim=function(){CB_STATE.dim=null;cbRenderPills();};
-  window.cbRemoveIdx=function(id){CB_STATE.idxs=CB_STATE.idxs.filter(function(x){return x!==id;});cbRenderPills();};
+  window.cbRemoveDim=function(){CB_STATE.dim=null;cbRenderPills();cbUpdateAutoName();};
+  window.cbRemoveIdx=function(id){CB_STATE.idxs=CB_STATE.idxs.filter(function(x){return x!==id;});cbRenderPills();cbUpdateAutoHint();cbUpdateAutoName();};
   window.cbOpenMiniPop=function(ev,kind){
     ev.stopPropagation();
     document.querySelectorAll('.cb-mini-pop.show').forEach(function(p){p.classList.remove('show');});
@@ -2504,14 +2552,33 @@ window.addEventListener('DOMContentLoaded',function(){
     if(kind==='dim'){CB_STATE.dim=id;}
     else {if(CB_STATE.idxs.indexOf(id)<0)CB_STATE.idxs.push(id);}
     cbRenderPills();
+    cbUpdateAutoHint();
+    cbUpdateAutoName();
     document.querySelectorAll('.cb-mini-pop.show').forEach(function(p){p.classList.remove('show');});
   };
+  function cbUpdateAutoName(){
+    var nameI = document.getElementById('cb-name'); if(!nameI) return;
+    if(CB_STATE.nameManual) return; // 사용자가 직접 입력했으면 건드리지 않음
+    if(!CB_STATE.dim || !CB_STATE.idxs.length){ nameI.placeholder='예: 매체별 조회수 비교'; nameI.value=''; return; }
+    var dimL = (typeof findDimLabel==='function')?findDimLabel(CB_STATE.dim):CB_STATE.dim;
+    var idxL = CB_STATE.idxs.map(function(i){var m=findIdx(i);return m?m.label:i;});
+    var t = document.getElementById('cb-type').value;
+    var mw = (t==='line')?'추이':(t==='radar'?'레이더':(t==='doughnut'?'구성비':'비교'));
+    nameI.value = dimL+'별 '+idxL.join(', ')+' '+mw;
+  }
+  window.cbUpdateAutoName = cbUpdateAutoName;
   window.saveChartBuilder=function(){
-    var name=(document.getElementById('cb-name').value||'').trim();
     var type=document.getElementById('cb-type').value;
-    if(!name){if(typeof showToast==='function')showToast('차트 이름을 입력하세요.');return;}
     if(!CB_STATE.dim){if(typeof showToast==='function')showToast('X축 디멘션을 선택하세요.');return;}
     if(!CB_STATE.idxs.length){if(typeof showToast==='function')showToast('Y축 지표를 1개 이상 선택하세요.');return;}
+    var name=(document.getElementById('cb-name').value||'').trim();
+    if(!name){
+      // 자동 생성 — AI와 동일한 표준 형식
+      var _dL = findDimLabel(CB_STATE.dim);
+      var _iL = CB_STATE.idxs.map(function(i){var m=findIdx(i);return m?m.label:i;});
+      var _mw = (type==='line')?'추이':(type==='radar'?'레이더':(type==='doughnut'?'구성비':'비교'));
+      name = _dL+'별 '+_iL.join(', ')+' '+_mw;
+    }
     var list=ucGetAll(CB_STATE.page);
     list.push({id:uid(),name:name,type:type,dim:CB_STATE.dim,idxs:CB_STATE.idxs.slice()});
     ucSetAll(CB_STATE.page,list);
@@ -3324,16 +3391,33 @@ window.addEventListener('DOMContentLoaded',function(){
     <h3 id="cb-title">+ 새 차트 추가</h3>
     <div class="cb-row">
       <label>차트 이름</label>
-      <input type="text" id="cb-name" placeholder="예: Meta CTR 일별 추이" maxlength="40">
+      <input type="text" id="cb-name" placeholder="예: 매체별 조회수 비교 (자동 생성)" maxlength="40" oninput="if(this.value.trim())(window.CB_STATE&&(CB_STATE.nameManual=true));else CB_STATE.nameManual=false;">
     </div>
     <div class="cb-row">
-      <label>차트 타입</label>
-      <select id="cb-type">
-        <option value="line">선 그래프 (Line)</option>
-        <option value="bar">막대 그래프 (Bar)</option>
-        <option value="doughnut">도넛 (Doughnut)</option>
-        <option value="radar">레이더 (Radar)</option>
-      </select>
+      <label>차트 타입 <span class="cb-auto-hint" id="cb-type-auto" style="font-size:11px;color:#9CA3AF;margin-left:6px"></span></label>
+      <div class="cb-type-cards" id="cb-type-cards">
+        <button type="button" class="cb-type-card" data-type="line" onclick="cbPickType('line')">
+          <div class="cb-tc-icon">📈</div>
+          <div class="cb-tc-label">선 그래프</div>
+          <div class="cb-tc-sub">추이 · %</div>
+        </button>
+        <button type="button" class="cb-type-card" data-type="bar" onclick="cbPickType('bar')">
+          <div class="cb-tc-icon">📊</div>
+          <div class="cb-tc-label">막대 그래프</div>
+          <div class="cb-tc-sub">비교 · 정수</div>
+        </button>
+        <button type="button" class="cb-type-card" data-type="doughnut" onclick="cbPickType('doughnut')">
+          <div class="cb-tc-icon">🍩</div>
+          <div class="cb-tc-label">도넛</div>
+          <div class="cb-tc-sub">구성비</div>
+        </button>
+        <button type="button" class="cb-type-card" data-type="radar" onclick="cbPickType('radar')">
+          <div class="cb-tc-icon">📡</div>
+          <div class="cb-tc-label">레이더</div>
+          <div class="cb-tc-sub">다지표 비교</div>
+        </button>
+      </div>
+      <input type="hidden" id="cb-type" value="line">
     </div>
     <div class="cb-row">
       <label>X축 디멘션 (1개)</label>
