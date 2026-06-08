@@ -828,13 +828,13 @@ body.dark .bm-item:hover{background:var(--bg-soft2)}
       <!-- 매체별 KPI 목표 -->
       <div class="form-section">
         <div class="form-sec-hd">
-          <span class="form-sec-t">매체/상품별 KPI 목표</span>
-          <span style="font-size:11px;color:#9CA3AF">매체를 펼쳐 상품별 KPI를 설정할 수 있습니다</span>
+          <span class="form-sec-t">매체/광고 상품별 KPI 목표</span>
+          <span style="font-size:11px;color:#9CA3AF">매체를 펼쳐 광고 상품별 KPI를 설정할 수 있습니다 (예: Google → 서치/디스플레이)</span>
         </div>
         <div class="form-sec-body">
           <div class="twrap">
             <table id="kpi-tree-table" class="kpi-tree-table">
-              <thead><tr><th style="text-align:left;padding-left:8px">매체 / 상품</th><th>노출수</th><th>클릭수</th><th>CTR(%)</th><th>CPM(원)</th><th>CPC(원)</th><th style="width:40px"></th></tr></thead>
+              <thead><tr><th style="text-align:left;padding-left:8px">매체 / 광고 상품</th><th>노출수</th><th>클릭수</th><th>CTR(%)</th><th>CPM(원)</th><th>CPC(원)</th><th style="width:40px"></th></tr></thead>
               <tbody id="kpi-tree-tbody"></tbody>
             </table>
             <div style="margin-top:10px"><button class="dbtn" onclick="kpiAddMedia()">+ 매체 추가</button></div>
@@ -1830,7 +1830,9 @@ window.DIM_CATALOG = [
   {id:'advertiser',label:'광고주',col:'advertiser_standardized'},
   {id:'country',label:'국가',col:'country'},
   {id:'phase',label:'Phase',col:'phase'},
-  {id:'product',label:'상품',col:'product_name'},
+  {id:'product',label:'광고 상품',col:'ad_product'},
+  {id:'targeting',label:'타겟팅',col:'targeting'},
+  {id:'model',label:'차종/모델',col:'product_name'},
   {id:'creative',label:'크리에이티브',col:'creative'},
   {id:'creative_type',label:'크리에이티브 유형',col:'creative_type'},
   {id:'date',label:'일자',col:'date'},
@@ -2547,7 +2549,7 @@ window.addEventListener('DOMContentLoaded',function(){
   };
 
   function aiAsstGreet(){
-    aiAsstAddMsg('ai','안녕하세요 👋 자연어로 화면을 조작해드릴게요. 아래 추천을 눌르거나 직접 입력하세요.<br><br>예)<br>· "매체별 CTR 비교 차트 만들어줘"<br>· "디멘션에 상품 추가"<br>· "다크 모드"<br>· "지표에 ROAS 추가"');
+    aiAsstAddMsg('ai','안녕하세요 👋 자연어로 화면을 조작해드릴게요. 아래 추천을 눌르거나 직접 입력하세요.<br><br>예)<br>· "매체별 CTR 비교 차트 만들어줘"<br>· "디멘션에 광고 상품 추가"<br>· "다크 모드"<br>· "지표에 ROAS 추가"');
   }
   function aiAsstRenderChips(){
     var box=document.getElementById('ai-asst-chips');if(!box)return;
@@ -2606,7 +2608,7 @@ window.addEventListener('DOMContentLoaded',function(){
     // 3. 차트 만들기 (가장 강력)
     if(/차트|그래프|마들어|추가|그려/.test(t) && /차트|그래프|비교|추이/.test(t)){
       // 디멘션/지표 키워드 매칭
-      var dimKw={'매체':'media','날짜':'date','일별':'date','일자':'date','주별':'week','주차':'week','월별':'month','월차':'month','phase':'phase','페이즈':'phase','광고파일':'ad_file','소재':'ad_file','서브카테고리':'sub_category','카테고리':'sub_category','상품':'product'};
+      var dimKw={'매체':'media','날짜':'date','일별':'date','일자':'date','주별':'week','주차':'week','월별':'month','월차':'month','phase':'phase','페이즈':'phase','광고파일':'ad_file','소재':'ad_file','서브카테고리':'sub_category','카테고리':'sub_category','광고상품':'product','광고 상품':'product','상품':'product','타겟팅':'targeting','타겟':'targeting','차종':'model','모델':'model'};
       var idxKw={'ctr':'ctr','클릭률':'ctr','클릭':'clicks','노출':'impressions','imp':'impressions','집행':'costs','예산':'costs','비용':'costs','cost':'costs','cpc':'cpc','cpm':'cpm','roas':'roas','전환':'conversions','전환수':'conversions','매출':'revenue','참여':'engagements','재생':'video_play','영상':'video_play','링크클릭':'inline_link_clicks','링크ctr':'ctr_inline_link_click'};
       var dim=null,idxs=[],chartType='line';
       Object.keys(dimKw).forEach(function(k){if(t.indexOf(k)>=0&&!dim)dim=dimKw[k];});
@@ -2635,7 +2637,7 @@ window.addEventListener('DOMContentLoaded',function(){
     }
     // 4. 디멘션 추가/제거 (di-panel 토글)
     if(/디멘션|구분|축/.test(t) && /추가|넣어|포함/.test(t)){
-      var dimKw2={'매체':'media','날짜':'date','일별':'date','주별':'week','월별':'month','phase':'phase','페이즈':'phase','광고파일':'ad_file','소재':'ad_file','카테고리':'sub_category','상품':'product','디바이스':'device','기기':'device','성별':'gender','연령':'age'};
+      var dimKw2={'매체':'media','날짜':'date','일별':'date','주별':'week','월별':'month','phase':'phase','페이즈':'phase','광고파일':'ad_file','소재':'ad_file','카테고리':'sub_category','광고상품':'product','광고 상품':'product','상품':'product','타겟팅':'targeting','타겟':'targeting','차종':'model','모델':'model','디바이스':'device','기기':'device','성별':'gender','연령':'age'};
       var picked=null;
       Object.keys(dimKw2).forEach(function(k){if(t.indexOf(k)>=0&&!picked)picked=dimKw2[k];});
       if(!picked)return {reply:'어느 디멘션을 추가할지 알아듣을 수 없어요. 예: "디멘션에 상품 추가해줘"'};
@@ -2857,7 +2859,9 @@ window.addEventListener('DOMContentLoaded',function(){
       country:['KR','US','JP'],
       creative:['Creative A','Creative B','Creative C'],
       creative_type:['이미지','영상','캐러셀'],
-      product:['투싼','싼타페','쏘렌토','EV6','아이오닉5','G80']
+      product:['서치 광고','디스플레이','피드 광고','릴스 광고','쇼츠 광고','네이티브 광고'],
+      targeting:['리타겟팅','관심사 기반','유사 타겟','인구통계','지역 기반','키워드','자동 타겟'],
+      model:['투싼','싼타페','쏘렌토','EV6','아이오닉5','G80']
     };
     return m[dimId]||['A','B','C','D'];
   }
@@ -3172,7 +3176,7 @@ function kpiTreeRender(){
     var sym = m.open ? '\u2212' : '+';
     rows.push('<tr class="kpi-media" data-mid="'+m.id+'">'+
       '<td><button class="kpi-toggle'+(m.open?' open':'')+'" onclick="kpiToggleMedia(\''+m.id+'\')">'+sym+'</button>'+m.media+
-      '<button class="kpi-add-prd" onclick="kpiAddProduct(\''+m.id+'\')">+ 상품 추가</button></td>'+
+      '<button class="kpi-add-prd" onclick="kpiAddProduct(\''+m.id+'\')">+ 광고 상품 추가</button></td>'+
       '<td><input class="finp" type="number" value="'+m.kpi.imp+'" style="width:110px" onchange="kpiSetMedia(\''+m.id+'\',\'imp\',this.value)"></td>'+
       '<td><input class="finp" type="number" value="'+m.kpi.clk+'" style="width:100px" onchange="kpiSetMedia(\''+m.id+'\',\'clk\',this.value)"></td>'+
       '<td><input class="finp" type="number" step="0.1" value="'+m.kpi.ctr+'" style="width:80px" onchange="kpiSetMedia(\''+m.id+'\',\'ctr\',this.value)"></td>'+
@@ -3189,7 +3193,7 @@ function kpiTreeRender(){
           '<td><input class="finp" type="number" step="0.1" value="'+p.kpi.ctr+'" style="width:80px" onchange="kpiSetProduct(\''+m.id+'\',\''+p.id+'\',\'ctr\',this.value)"></td>'+
           '<td><input class="finp" type="number" value="'+p.kpi.cpm+'" style="width:90px" onchange="kpiSetProduct(\''+m.id+'\',\''+p.id+'\',\'cpm\',this.value)"></td>'+
           '<td><input class="finp" type="number" value="'+p.kpi.cpc+'" style="width:90px" onchange="kpiSetProduct(\''+m.id+'\',\''+p.id+'\',\'cpc\',this.value)"></td>'+
-          '<td><button class="kpi-del" title="상품 삭제" onclick="kpiDelProduct(\''+m.id+'\',\''+p.id+'\')">\u2715</button></td>'+
+          '<td><button class="kpi-del" title="광고 상품 삭제" onclick="kpiDelProduct(\''+m.id+'\',\''+p.id+'\')">\u2715</button></td>'+
         '</tr>');
       });
     }
@@ -3199,7 +3203,7 @@ function kpiTreeRender(){
 window.kpiToggleMedia=function(mid){var m=KPI_TREE.find(function(x){return x.id===mid;}); if(m){m.open=!m.open; kpiTreeRender();}};
 window.kpiSetMedia=function(mid,k,v){var m=KPI_TREE.find(function(x){return x.id===mid;}); if(m){m.kpi[k]=Number(v);}};
 window.kpiSetProduct=function(mid,pid,k,v){var m=KPI_TREE.find(function(x){return x.id===mid;}); if(!m) return; var p=m.products.find(function(x){return x.id===pid;}); if(p){if(k==='name'){p.name=v;}else{p.kpi[k]=Number(v);}}};
-window.kpiAddProduct=function(mid){var m=KPI_TREE.find(function(x){return x.id===mid;}); if(!m) return; m.products.push({id:'p_'+Date.now(),name:'새 상품',kpi:{imp:1000000,clk:10000,ctr:1.0,cpm:5000,cpc:500}}); m.open=true; kpiTreeRender();};
+window.kpiAddProduct=function(mid){var m=KPI_TREE.find(function(x){return x.id===mid;}); if(!m) return; m.products.push({id:'p_'+Date.now(),name:'새 광고 상품',kpi:{imp:1000000,clk:10000,ctr:1.0,cpm:5000,cpc:500}}); m.open=true; kpiTreeRender();};
 window.kpiDelProduct=function(mid,pid){var m=KPI_TREE.find(function(x){return x.id===mid;}); if(!m) return; m.products=m.products.filter(function(p){return p.id!==pid;}); kpiTreeRender();};
 window.kpiAddMedia=function(){var id='m_'+Date.now(); KPI_TREE.push({id:id,media:'새 매체',open:true,kpi:{imp:1000000,clk:10000,ctr:1.0,cpm:5000,cpc:500},products:[]}); kpiTreeRender();};
 window.kpiDelMedia=function(mid){KPI_TREE = KPI_TREE.filter(function(m){return m.id!==mid;}); kpiTreeRender();};
