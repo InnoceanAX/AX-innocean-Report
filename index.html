@@ -2589,6 +2589,107 @@ window.addEventListener('DOMContentLoaded',function(){
     },350);
   };
 
+
+  // === 카탈로그 기반 자연어 매칭 (CEO 2026-06-08 16:51) ===
+  // 모든 IDX_CATALOG / DIM_CATALOG에서 라벨/ID를 자동 추출하여 매칭
+  function normalizeStr(s){
+    return (s||'').toLowerCase()
+      .replace(/[\(\)\[\]]/g,' ')
+      .replace(/[·,]/g,' ')
+      .replace(/\s+/g,' ')
+      .trim();
+  }
+  // 사용자 표현 → 카탈로그 id 별칭
+  var IDX_ALIASES = {
+    'ctr':'ctr','클릭률':'ctr','클릭율':'ctr',
+    'cpc':'cpc','cpm':'cpm','cpv':'cpv','roas':'roas','cvr':'conversion_rate',
+    '클릭수':'clicks','클릭':'clicks','clicks':'clicks',
+    '노출수':'impressions','노출':'impressions','imp':'impressions','impressions':'impressions',
+    '도달수':'reach','도달':'reach','reach':'reach',
+    '빈도':'frequency','frequency':'frequency','freq':'frequency',
+    '조회수':'views','조회':'views','뷰':'views','view':'views','views':'views',
+    '영상 조회수':'video_views','영상조회수':'video_views','video views':'video_views',
+    '완전 시청':'thruplay','완전시청':'thruplay','thruplay':'thruplay',
+    '완료율':'vtr','시청 완료율':'vtr','시청완료율':'vtr','vtr':'vtr',
+    '집행액':'costs','집행':'costs','예산':'costs','비용':'costs','cost':'costs','costs':'costs',
+    '전환수':'conversions','전환':'conversions','conversions':'conversions',
+    '전환율':'conversion_rate',
+    '매출':'revenue','revenue':'revenue',
+    '참여':'engagements','engagements':'engagements','engagement':'engagements',
+    '링크 클릭':'inline_link_clicks','링크클릭':'inline_link_clicks','inline link clicks':'inline_link_clicks',
+    '링크 ctr':'ctr_inline_link_click','링크ctr':'ctr_inline_link_click'
+  };
+  var DIM_ALIASES = {
+    '매체':'media','media':'media',
+    '캠페인':'campaign','campaign':'campaign',
+    '캠페인 id':'campaign_id','campaign id':'campaign_id',
+    '브랜드':'brand_name','brand':'brand_name',
+    '광고주':'advertiser','advertiser':'advertiser',
+    '국가':'country','country':'country',
+    'phase':'phase','페이즈':'phase','피즈':'phase',
+    '광고 상품':'product','광고상품':'product','상품':'product','product':'product',
+    '타겟팅':'targeting','타겟':'targeting','targeting':'targeting','target':'targeting',
+    '차종':'model','모델':'model','model':'model',
+    '크리에이티브':'creative','creative':'creative',
+    '크리에이티브 유형':'creative_type','creative type':'creative_type',
+    '일자':'date','날짜':'date','일별':'date','date':'date',
+    '연도':'year','년도':'year','year':'year',
+    '월':'month','월별':'month','month':'month'
+  };
+
+  // 카탈로그 전체에서 ID + 라벨을 인덱싱
+  function buildLookup(){
+    var lookup = { idx: [], dim: [] };
+    (window.IDX_CATALOG||[]).forEach(function(grp){
+      (grp.items||[]).forEach(function(it){
+        lookup.idx.push({id:it.id, key:normalizeStr(it.label)});
+        lookup.idx.push({id:it.id, key:it.id.toLowerCase()});
+      });
+    });
+    (window.DIM_CATALOG||[]).forEach(function(d){
+      lookup.dim.push({id:d.id, key:normalizeStr(d.label)});
+      lookup.dim.push({id:d.id, key:d.id.toLowerCase()});
+    });
+    // 별칭도 lookup에 합치기
+    Object.keys(IDX_ALIASES).forEach(function(k){ lookup.idx.push({id:IDX_ALIASES[k], key:normalizeStr(k)}); });
+    Object.keys(DIM_ALIASES).forEach(function(k){ lookup.dim.push({id:DIM_ALIASES[k], key:normalizeStr(k)}); });
+    // 긴 키부터 검사하도록 정렬
+    lookup.idx.sort(function(a,b){return b.key.length - a.key.length;});
+    lookup.dim.sort(function(a,b){return b.key.length - a.key.length;});
+    return lookup;
+  }
+
+  function matchFromCatalog(text){
+    var t = normalizeStr(text);
+    var lookup = buildLookup();
+    // 1) 지표 매칭 — 중복 제거하면서 본문 등장 순서대로
+    var foundIdx = [];
+    var consumed = ' ' + t + ' ';
+    lookup.idx.forEach(function(entry){
+      if(!entry.key) return;
+      var pat = ' '+entry.key+' ';
+      if(consumed.indexOf(pat) >= 0 || consumed.indexOf(' '+entry.key) >= 0 || consumed.indexOf(entry.key+' ') >= 0){
+        if(foundIdx.indexOf(entry.id) < 0) foundIdx.push(entry.id);
+        // 소비하여 중복/하위어 방지
+        consumed = consumed.split(entry.key).join(' ');
+      }
+    });
+    // 2) 디멘션 매칭
+    var foundDim = null;
+    var dconsumed = ' ' + t + ' ';
+    lookup.dim.some(function(entry){
+      if(!entry.key) return false;
+      if(dconsumed.indexOf(entry.key) >= 0){
+        foundDim = entry.id;
+        return true;
+      }
+      return false;
+    });
+    // 차트 타입 추론
+    return { dim: foundDim, idxs: foundIdx };
+  }
+  window.matchFromCatalog = matchFromCatalog;
+
   // ---------- 룰 기반 자연어 파서 ----------
   function aiParse(q,page){
     var t=q.toLowerCase().replace(/\s+/g,' ');
@@ -2605,14 +2706,12 @@ window.addEventListener('DOMContentLoaded',function(){
         else if(typeof showToast==='function')showToast('차트가 없습니다');
       },actionLabel:'PNG 다운로드'};
     }
-    // 3. 차트 만들기 (가장 강력)
+    // 3. 차트 만들기 (가장 강력) — 카탈로그 기반 매칭 (CEO 16:51)
     if(/차트|그래프|마들어|추가|그려/.test(t) && /차트|그래프|비교|추이/.test(t)){
-      // 디멘션/지표 키워드 매칭
-      var dimKw={'매체':'media','날짜':'date','일별':'date','일자':'date','주별':'week','주차':'week','월별':'month','월차':'month','phase':'phase','페이즈':'phase','광고파일':'ad_file','소재':'ad_file','서브카테고리':'sub_category','카테고리':'sub_category','광고상품':'product','광고 상품':'product','상품':'product','타겟팅':'targeting','타겟':'targeting','차종':'model','모델':'model'};
-      var idxKw={'ctr':'ctr','클릭률':'ctr','클릭수':'clicks','클릭':'clicks','노출수':'impressions','노출':'impressions','imp':'impressions','집행':'costs','예산':'costs','비용':'costs','cost':'costs','cpc':'cpc','cpm':'cpm','roas':'roas','전환수':'conversions','전환':'conversions','매출':'revenue','참여':'engagements','재생수':'video_play','재생':'video_play','영상재생':'video_play','영상':'video_play','조회수':'video_play','조회':'video_play','뷰':'video_play','view':'video_play','views':'video_play','vtr':'vtr','완료율':'vtr','도달수':'reach','도달':'reach','reach':'reach','frequency':'frequency','빈도':'frequency','링크클릭':'inline_link_clicks','링크ctr':'ctr_inline_link_click'};
-      var dim=null,idxs=[],chartType='line';
-      Object.keys(dimKw).forEach(function(k){if(t.indexOf(k)>=0&&!dim)dim=dimKw[k];});
-      Object.keys(idxKw).forEach(function(k){if(t.indexOf(k)>=0&&idxs.indexOf(idxKw[k])<0)idxs.push(idxKw[k]);});
+      var matched = matchFromCatalog(t);
+      var dim = matched.dim;
+      var idxs = matched.idxs;
+      var chartType='line';
       if(/막대|bar|비교/.test(t))chartType='bar';
       if(/도넛|doughnut|원형|pie|파이/.test(t))chartType='doughnut';
       if(/레이더|radar/.test(t))chartType='radar';
@@ -2640,10 +2739,9 @@ window.addEventListener('DOMContentLoaded',function(){
     }
     // 4. 디멘션 추가/제거 (di-panel 토글)
     if(/디멘션|구분|축/.test(t) && /추가|넣어|포함/.test(t)){
-      var dimKw2={'매체':'media','날짜':'date','일별':'date','주별':'week','월별':'month','phase':'phase','페이즈':'phase','광고파일':'ad_file','소재':'ad_file','카테고리':'sub_category','광고상품':'product','광고 상품':'product','상품':'product','타겟팅':'targeting','타겟':'targeting','차종':'model','모델':'model','디바이스':'device','기기':'device','성별':'gender','연령':'age'};
-      var picked=null;
-      Object.keys(dimKw2).forEach(function(k){if(t.indexOf(k)>=0&&!picked)picked=dimKw2[k];});
-      if(!picked)return {reply:'어느 디멘션을 추가할지 알아듣을 수 없어요. 예: "디멘션에 상품 추가해줘"'};
+      var picked = matchFromCatalog(t).dim;
+      if(!picked)return {reply:'어느 디멘션을 추가할지 알아듣을 수 없어요. 등록된 디멘션: '+
+        (window.DIM_CATALOG||[]).map(function(d){return d.label;}).join(', ')+'<br>예: "디멘션에 광고 상품 추가해줘"'};
       var panels=(page==='phase')?['phase-trend-di','phase-radar-di','phase-cmp-di','phase-kpi-di']:['daily-sum-di','daily-tbl-di'];
       return {reply:'모든 패널의 디멘션에 <b>'+findDimLabel(picked)+'</b>을 추가합니다.',
         action:function(){
@@ -2655,10 +2753,9 @@ window.addEventListener('DOMContentLoaded',function(){
     }
     // 5. 지표 추가
     if(/지표|메트릭|metric/.test(t) && /추가|넣어/.test(t)){
-      var idxKw2={'ctr':'ctr','클릭률':'ctr','클릭':'clicks','노출':'impressions','집행':'costs','예산':'costs','cpc':'cpc','cpm':'cpm','roas':'roas','전환':'conversions','매출':'revenue','링크클릭':'inline_link_clicks'};
-      var idxPicked=null;
-      Object.keys(idxKw2).forEach(function(k){if(t.indexOf(k)>=0&&!idxPicked)idxPicked=idxKw2[k];});
-      if(!idxPicked)return {reply:'어느 지표인지 파악 못했어요. 예: "지표에 ROAS 추가"'};
+      var foundIdxs = matchFromCatalog(t).idxs;
+      var idxPicked = foundIdxs[0]||null;
+      if(!idxPicked)return {reply:'어느 지표인지 파악 못했어요. 예: "지표에 ROAS 추가" / "조회수 추가" / "도달 추가" 등.'};
       var panels2=(page==='phase')?['phase-trend-di','phase-radar-di','phase-cmp-di','phase-kpi-di']:['daily-sum-di','daily-tbl-di'];
       return {reply:'모든 패널의 지표에 <b>'+(findIdx(idxPicked)?findIdx(idxPicked).label:idxPicked)+'</b>를 추가합니다.',
         action:function(){
