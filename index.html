@@ -45,17 +45,18 @@ html,body{height:100%;font-family:'Pretendard Variable','Pretendard','Noto Sans 
 .step-lbl{display:flex;align-items:center;gap:14px;margin:0 0 18px;width:100%}
 .step-lbl .sd-line{flex:1;height:1px;background:var(--bdr)}
 .step-lbl .sd-lbl{font-size:11px;font-weight:700;letter-spacing:.2em;color:#6B7280;text-transform:uppercase}
-.mm-cta{background:linear-gradient(120deg,#5B21B6 0%,#1E3A8A 45%,#0F172A 100%);color:#fff;padding:32px 36px;display:flex;align-items:stretch;gap:0;position:relative;overflow:hidden;width:100%;box-sizing:border-box}
+.mm-cta{background:linear-gradient(120deg,#5B21B6 0%,#1E3A8A 45%,#0F172A 100%);color:#fff;padding:28px 32px;display:flex;align-items:stretch;gap:0;position:relative;overflow:hidden;width:100%;box-sizing:border-box;max-width:none}
+.mm-cta-inner{display:flex;align-items:stretch;gap:0;width:100%;max-width:1100px;margin:0 auto;position:relative;z-index:1}
 .mm-cta::before{content:'';position:absolute;top:-40%;left:-10%;width:520px;height:520px;background:radial-gradient(circle,rgba(124,58,237,.35) 0%,transparent 60%);pointer-events:none;filter:blur(20px)}
 .mm-cta::after{content:'';position:absolute;bottom:-50%;right:-10%;width:520px;height:520px;background:radial-gradient(circle,rgba(59,130,246,.25) 0%,transparent 60%);pointer-events:none;filter:blur(20px)}
-.mm-cta .mm-l{display:flex;align-items:center;gap:24px;flex-shrink:0;position:relative;z-index:1;min-width:360px;justify-content:center;padding-right:32px}
+.mm-cta .mm-l{display:flex;align-items:center;gap:20px;flex-shrink:0;position:relative;z-index:1;min-width:300px;justify-content:flex-start;padding-right:24px}
 .mm-cta .mm-icon{width:56px;height:56px;background:#fff;color:#000;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .mm-cta .mm-icon svg{width:28px;height:28px;stroke:#000;stroke-width:2;fill:none}
 .mm-cta .mm-title-block{display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left}
 .mm-cta .mm-t{font-size:22px;font-weight:700;letter-spacing:-.01em;margin:0;line-height:1.2;color:#fff}
 .mm-cta .mm-s{font-size:11px;letter-spacing:.18em;color:rgba(255,255,255,.6);text-transform:uppercase;font-weight:600;margin:0}
 .mm-cta .mm-vbar{width:1px;align-self:stretch;background:rgba(255,255,255,.2);flex-shrink:0;position:relative;z-index:1}
-.mm-cta .mm-mid{flex:1;min-width:0;position:relative;z-index:1;text-align:left;padding:0 32px;display:flex;align-items:center}
+.mm-cta .mm-mid{flex:1;min-width:0;position:relative;z-index:1;text-align:left;padding:0 28px;display:flex;align-items:center}
 .mm-cta .mm-d{font-size:13px;color:rgba(255,255,255,.78);line-height:1.7;margin:0}
 .mm-cta .mm-btn{background:#fff;color:#000;border:none;padding:14px 28px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:8px;flex-shrink:0;position:relative;z-index:1;transition:all .2s}
 .mm-cta .mm-btn:hover{background:#4F46E5;color:#fff;transform:translateX(4px)}
@@ -233,7 +234,7 @@ tbody tr.total-row td{font-weight:700;background:#FAFAFA}
 .gross-extra{display:none;align-items:center;gap:8px}
 .gross-extra.show{display:flex}
 .chart-two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
-@media(max-width:1024px){.cgrid2{grid-template-columns:1fr}.cgrid3{grid-template-columns:1fr}.sum-grid{grid-template-columns:1fr 1fr}.ph-kpi-grid{grid-template-columns:1fr 1fr}.form-grid{grid-template-columns:1fr}.chart-two-col{grid-template-columns:1fr}.mm-cta{flex-direction:column;align-items:flex-start}.mm-cta .mm-l{min-width:0}.mm-cta .mm-vbar{display:none}.mm-cta .mm-mid{width:100%}.mm-cta .mm-btn{align-self:stretch;justify-content:center}}
+@media(max-width:1024px){.cgrid2{grid-template-columns:1fr}.cgrid3{grid-template-columns:1fr}.sum-grid{grid-template-columns:1fr 1fr}.ph-kpi-grid{grid-template-columns:1fr 1fr}.form-grid{grid-template-columns:1fr}.chart-two-col{grid-template-columns:1fr}.mm-cta-inner{flex-direction:column;align-items:flex-start}.mm-cta .mm-l{min-width:0}.mm-cta .mm-vbar{display:none}.mm-cta .mm-mid{width:100%;padding:16px 0}.mm-cta .mm-btn{align-self:stretch;justify-content:center}}
 .resize-handle{width:6px;background:transparent;cursor:col-resize;flex-shrink:0;position:relative;z-index:5;transition:background .2s}.resize-handle:hover,.resize-handle.active{background:#E5E7EB}
 
 /* === AI 추천 질문 칩 === */
@@ -572,20 +573,22 @@ body.dark .bm-item:hover{background:var(--bg-soft2)}
 
     <!-- 미디어믹스 설정 (전제조건) -->
     <div class="mm-cta">
-      <div class="mm-l">
-        <div class="mm-icon">
-          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18"/><path d="M3 9h18M9 21V9"/></svg>
+      <div class="mm-cta-inner">
+        <div class="mm-l">
+          <div class="mm-icon">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18"/><path d="M3 9h18M9 21V9"/></svg>
+          </div>
+          <div class="mm-title-block">
+            <h2 class="mm-t">미디어믹스 설정</h2>
+            <span class="mm-s">MEDIA MIX SETUP</span>
+          </div>
         </div>
-        <div class="mm-title-block">
-          <h2 class="mm-t">미디어믹스 설정</h2>
-          <span class="mm-s">MEDIA MIX SETUP</span>
+        <div class="mm-vbar"></div>
+        <div class="mm-mid">
+          <p class="mm-d">캠페인 정보, KPI 목표, 매체 예산 배분, Phase 일정을 먼저 설정하세요.<br>아래 모든 솔루션이 이 데이터를 기준으로 동작합니다.</p>
         </div>
+        <button class="mm-btn" onclick="showPage('mm')">시작하기 →</button>
       </div>
-      <div class="mm-vbar"></div>
-      <div class="mm-mid">
-        <p class="mm-d">캠페인 정보, KPI 목표, 매체 예산 배분, Phase 일정을 먼저 설정하세요.<br>아래 모든 솔루션이 이 데이터를 기준으로 동작합니다.</p>
-      </div>
-      <button class="mm-btn" onclick="showPage('mm')">시작하기 →</button>
     </div>
 
     <div class="sol-divider"><span class="sd-line"></span><span class="sd-lbl">· STEP 2 · 분석 솔루션</span><span class="sd-line"></span></div>
@@ -2252,11 +2255,20 @@ window.addEventListener('DOMContentLoaded',function(){
       html+='<div class="user-chart-card" data-uc-id="'+c.id+'">'+
         '<button class="uc-x" title="삭제" onclick="ucDelete(\u0027'+page+'\u0027,\u0027'+c.id+'\u0027)">✕</button>'+
         '<div class="ccard-hd"><div><div class="ccard-t">'+(c.name||'차트')+'</div><div class="ccard-s">'+(c.dim?findDimLabel(c.dim):'')+' · '+(c.idxs||[]).map(function(i){var m=findIdx(i);return m?m.label:i;}).join(', ')+'</div></div></div>'+
+        '<div class="di-panel di-compact" id="uc-di-'+c.id+'"></div>'+
         '<div class="chart-wrap-sm"><canvas id="canvas-'+c.id+'"></canvas></div>'+
         '</div>';
     });
     grid.innerHTML=html;
-    list.forEach(function(c){drawUserChart(c);});
+    list.forEach(function(c){
+      // Initialize per-chart di-panel state and render
+      var pid='uc-di-'+c.id;
+      if(window.DI_STATE && typeof window.DI_STATE === 'object'){
+        window.DI_STATE[pid] = window.DI_STATE[pid] || {dims:c.dim?[c.dim]:[], idxs:(c.idxs||[]).slice(), page:page, target:c.id};
+      }
+      if(typeof renderDiPanel==='function'){renderDiPanel(pid);}
+      drawUserChart(c);
+    });
   };
 
   function drawUserChart(c){
