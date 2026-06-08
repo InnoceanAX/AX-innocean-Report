@@ -256,13 +256,15 @@ tbody tr.total-row td{font-weight:700;background:#FAFAFA}
 .mc-item.all{font-weight:600;border-bottom:1px solid var(--bdr)}
 /* === 디멘션/인덱스 선택 패널 === */
 .di-panel{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center;padding:12px 16px;background:#F9FAFB;border:1px solid var(--bdr)}
-.di-panel.di-compact{padding:8px 12px;margin-bottom:10px;gap:6px;font-size:11px;background:#F3F4F6;border:none;border-bottom:1px dashed var(--bdr)}
-.di-compact .di-lbl{font-size:10px}
+.di-panel.di-compact{padding:8px 12px;margin-bottom:10px;gap:6px;font-size:11px;background:#F3F4F6;border:none;border-bottom:1px dashed var(--bdr);color:#1F2937}
+/* moved up */
 .di-compact .di-pill{padding:3px 8px;font-size:11px;border-radius:10px}
 .di-compact .di-addbtn{font-size:10px;padding:3px 7px}
 .di-compact .di-tool-btn{font-size:10px;padding:3px 7px}
 .di-grp{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.di-lbl{font-size:11px;font-weight:700;color:#555;margin-right:4px;letter-spacing:.04em}
+.di-counter{display:inline-block;font-size:10px;background:#EEF2FF;color:var(--ind);padding:1px 6px;border-radius:8px;border:1px solid rgba(79,70,229,.2);font-weight:700;min-width:18px;text-align:center}
+.di-lbl{font-size:11px;font-weight:700;color:#1F2937;margin-right:4px;letter-spacing:.04em;background:#fff;padding:3px 8px;border:1px solid #D1D5DB;border-radius:4px;display:inline-flex;align-items:center;gap:4px}
+.di-compact .di-lbl{font-size:10px;padding:2px 6px;color:#111827}
 .di-pill{display:inline-flex;align-items:center;gap:4px;padding:5px 10px;background:#fff;border:1px solid var(--bdr);font-size:12px;color:#374151;cursor:pointer;transition:all .15s;border-radius:14px;user-select:none}
 .di-pill:hover{border-color:#000}
 .di-pill.on{background:var(--ind);color:#fff;border-color:var(--ind)}
@@ -271,12 +273,23 @@ tbody tr.total-row td{font-weight:700;background:#FAFAFA}
 .di-add{position:relative}
 .di-addbtn{background:#fff;border:1px dashed #9CA3AF;padding:5px 10px;font-size:12px;color:#555;cursor:pointer;border-radius:14px}
 .di-addbtn:hover{border-color:#000;color:#000}
-.di-addpop{position:absolute;top:100%;left:0;margin-top:4px;background:#fff;border:1px solid var(--bdr);box-shadow:0 4px 12px rgba(0,0,0,.1);z-index:50;min-width:180px;max-height:280px;overflow-y:auto;display:none;padding:6px 0}
-.di-addpop.show{display:block}
-.di-addpop .it{padding:7px 12px;font-size:13px;color:#374151;cursor:pointer;user-select:none;display:flex;align-items:center;gap:6px}
-.di-addpop .it:hover{background:#F3F4F6}
-.di-addpop .it.added{color:#9CA3AF;cursor:default;background:#FAFAFA}
-.di-addpop .it.added::after{content:'\2713';margin-left:auto;font-size:11px}
+.di-addpop{position:absolute;top:100%;left:0;margin-top:4px;background:#fff;border:1px solid var(--bdr);box-shadow:0 6px 18px rgba(0,0,0,.12);z-index:50;min-width:260px;max-height:400px;display:none;padding:0;flex-direction:column}
+.di-pop-search{padding:8px;border-bottom:1px solid var(--bdr);background:#fff}
+.di-pop-search input{width:100%;height:30px;padding:0 10px;font-size:12px;border:1px solid var(--bdr);outline:none;border-radius:4px;box-sizing:border-box;font-family:inherit;color:#1F2937;background:#fff}
+.di-pop-search input:focus{border-color:var(--ind)}
+.di-pop-body{flex:1;overflow-y:auto;padding:4px 0;max-height:280px}
+.di-pop-actions{background:#fff;border-top:1px solid var(--bdr);padding:8px;display:flex;gap:6px;justify-content:flex-end}
+.di-pop-actions button{height:28px;padding:0 12px;font-size:12px;border:1px solid var(--bdr);background:#fff;cursor:pointer;font-family:inherit;color:#1F2937;border-radius:3px}
+.di-pop-actions button.primary{background:#000;color:#fff;border-color:#000}
+.di-pop-actions button.primary:hover{background:var(--ind);border-color:var(--ind)}
+.di-pop-actions button:hover:not(.primary){background:#F3F4F6}
+.di-addpop.show{display:flex}
+.di-addpop .it{padding:7px 12px;font-size:13px;color:#1F2937;cursor:pointer;user-select:none;display:flex;align-items:center;gap:8px}
+.di-addpop .it:hover{background:#EEF2FF}
+.di-addpop .it.added{background:#F0F7FF}
+.di-addpop .it.added .it-lbl{color:var(--ind);font-weight:600}
+.di-addpop .it input[type="checkbox"]{accent-color:var(--ind);margin:0;width:14px;height:14px;cursor:pointer;flex-shrink:0}
+.di-addpop .it .it-lbl{flex:1;color:#1F2937}
 
 
 /* ====================== ADDED — Cycle C ====================== */
@@ -295,7 +308,10 @@ body.dark .fp{background:var(--bg-soft2);border-color:var(--border-c)}
 body.dark .fsel,body.dark .finp,body.dark .fdate,body.dark .mrow-inp,body.dark .gi,body.dark .form-inp,body.dark .mc-btn,body.dark .cinput{background:var(--input-bg);color:var(--text);border-color:var(--border-c)}
 body.dark .mc-pop,body.dark .di-addpop,body.dark .modal,body.dark .ai-sidebar,body.dark .chat-msgs{background:var(--card-bg);color:var(--text);border-color:var(--border-c)}
 body.dark .di-panel{background:var(--bg-soft2);border-color:var(--border-c)}
-body.dark .di-pill{background:var(--bg-soft);color:var(--text2);border-color:var(--border-c)}
+body.dark .di-lbl{background:var(--bg-soft2);color:var(--text);border-color:var(--border-c)}
+body.dark .di-counter{background:var(--bg-soft);color:var(--text2);border-color:var(--border-c)}
+body.dark .di-pill{background:var(--bg-soft);color:var(--text);border-color:var(--border-c)}
+body.dark .di-addpop .it,body.dark .di-addpop .it .it-lbl{color:var(--text)}
 body.dark .di-pill.on{background:var(--ind);color:#fff;border-color:var(--ind)}
 body.dark .di-addbtn{background:var(--bg-soft);color:var(--text2)}
 body.dark .di-addpop .it{color:var(--text2)}
@@ -342,6 +358,46 @@ body.dark .di-addpop .it .tip{background:var(--bg-soft2);color:var(--text4);bord
 @keyframes diPillOut{from{opacity:1;transform:none}to{opacity:0;transform:translateY(-4px) scale(.9)}}
 .sum-card.fade-in,@keyframes diFlash{0%{box-shadow:0 0 0 2px var(--ind);background:rgba(79,70,229,.04)}100%{box-shadow:0 0 0 0 transparent;background:transparent}}
 .di-flash{animation:diFlash .7s ease-out}
+.user-charts{margin-bottom:20px}
+.user-charts-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.user-charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.user-chart-card{background:#fff;border:1px solid var(--bdr);padding:18px;position:relative}
+body.dark .user-chart-card{background:var(--card-bg);border-color:var(--border-c)}
+.user-chart-card .uc-x{position:absolute;top:8px;right:8px;width:24px;height:24px;background:#fff;border:1px solid var(--bdr);font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#6B7280;border-radius:3px;z-index:5}
+.user-chart-card .uc-x:hover{background:#EF4444;color:#fff;border-color:#EF4444}
+.user-chart-card .ccard-hd{margin-bottom:10px}
+.user-chart-card .di-panel{margin-bottom:8px}
+.user-chart-card .chart-wrap-sm{height:240px}
+.add-chart-btn{height:32px;padding:0 14px;background:var(--ind);color:#fff;border:1px solid var(--ind);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;border-radius:0;display:inline-flex;align-items:center;gap:6px}
+.add-chart-btn:hover{background:var(--ind2);border-color:var(--ind2)}
+.cb-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9000;align-items:center;justify-content:center}
+.cb-modal.on{display:flex}
+.cb-modal-inner{background:#fff;width:480px;max-width:92vw;padding:24px;border:1px solid var(--bdr)}
+body.dark .cb-modal-inner{background:var(--card-bg);color:var(--text);border-color:var(--border-c)}
+.cb-modal-inner h3{margin:0 0 16px;font-size:14px;font-weight:700;color:#000}
+body.dark .cb-modal-inner h3{color:var(--text)}
+.cb-row{margin-bottom:12px}
+.cb-row label{display:block;font-size:11px;font-weight:700;color:#555;margin-bottom:4px;letter-spacing:.04em}
+body.dark .cb-row label{color:var(--text2)}
+.cb-row input[type=text],.cb-row select{width:100%;height:34px;padding:0 10px;border:1px solid var(--bdr);font-size:13px;font-family:inherit;outline:none;background:#fff;color:#1F2937;border-radius:0;box-sizing:border-box}
+body.dark .cb-row input,body.dark .cb-row select{background:var(--bg-soft2);color:var(--text);border-color:var(--border-c)}
+.cb-row input:focus,.cb-row select:focus{border-color:var(--ind)}
+.cb-pills{display:flex;gap:6px;flex-wrap:wrap;padding:8px;background:#F9FAFB;border:1px solid var(--bdr);min-height:36px;align-items:center}
+body.dark .cb-pills{background:var(--bg-soft2);border-color:var(--border-c)}
+.cb-pill{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;font-size:11px;background:var(--ind);color:#fff;border-radius:10px;cursor:pointer}
+.cb-pill .x{font-size:10px;opacity:.8}
+.cb-add-mini{font-size:11px;background:#fff;border:1px dashed var(--bdr);color:#6B7280;padding:3px 8px;cursor:pointer;font-family:inherit;border-radius:10px}
+body.dark .cb-add-mini{background:var(--bg-soft);color:var(--text2)}
+.cb-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.cb-actions button{height:34px;padding:0 16px;font-size:13px;border:1px solid var(--bdr);background:#fff;cursor:pointer;font-family:inherit;color:#1F2937;border-radius:0;font-weight:600}
+.cb-actions button.primary{background:#000;color:#fff;border-color:#000}
+.cb-actions button.primary:hover{background:var(--ind);border-color:var(--ind)}
+.cb-mini-pop{position:absolute;background:#fff;border:1px solid var(--bdr);box-shadow:0 4px 12px rgba(0,0,0,.12);z-index:9100;min-width:200px;max-height:240px;overflow-y:auto;padding:4px 0;display:none}
+.cb-mini-pop.show{display:block}
+.cb-mini-pop .it{padding:6px 12px;font-size:12px;cursor:pointer;color:#1F2937}
+.cb-mini-pop .it:hover{background:#EEF2FF}
+body.dark .cb-mini-pop{background:var(--card-bg);border-color:var(--border-c)}
+body.dark .cb-mini-pop .it{color:var(--text)}
 .daily-mtable-col-fade{animation:colFade .3s ease}
 @keyframes colFade{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
 
@@ -833,6 +889,15 @@ body.dark .bm-item:hover{background:var(--bg-soft2)}
       </div>
     </div>
 
+    <!-- 사용자 차트 (Daily) -->
+    <div class="user-charts" id="daily-user-charts">
+      <div class="user-charts-hd">
+        <span class="sec-t">차트</span>
+        <button class="add-chart-btn" onclick="openChartBuilder('daily')">+ 차트 추가</button>
+      </div>
+      <div class="user-charts-grid" id="daily-charts-grid"></div>
+    </div>
+
     <!-- Anomaly Alerts -->
     <div class="alert-section">
       <div class="alert-hd">
@@ -952,32 +1017,8 @@ body.dark .bm-item:hover{background:var(--bg-soft2)}
       <span class="sec-t" id="phase-kpi-title">성수기 Phase KPI — 목표 vs 실적</span>
       <span style="font-size:12px;color:#767676">2026-06-15 ~ 현재</span>
     </div>
-    <div class="ph-kpi-grid">
-      <div class="ph-kpi-card">
-        <div class="ph-kpi-lbl">예산 집행</div>
-        <div class="ph-kpi-target">목표: ₩60M</div>
-        <div class="ph-kpi-actual">₩44.2M</div>
-        <div class="ph-kpi-rate off">달성률 73.7%</div>
-      </div>
-      <div class="ph-kpi-card">
-        <div class="ph-kpi-lbl">노출수</div>
-        <div class="ph-kpi-target">목표: 7,000,000</div>
-        <div class="ph-kpi-actual">5.24M</div>
-        <div class="ph-kpi-rate off">달성률 74.9%</div>
-      </div>
-      <div class="ph-kpi-card">
-        <div class="ph-kpi-lbl">클릭수</div>
-        <div class="ph-kpi-target">목표: 150,000</div>
-        <div class="ph-kpi-actual">138.4K</div>
-        <div class="ph-kpi-rate on">달성률 92.3%</div>
-      </div>
-      <div class="ph-kpi-card">
-        <div class="ph-kpi-lbl">CTR</div>
-        <div class="ph-kpi-target">목표: 2.14%</div>
-        <div class="ph-kpi-actual">2.64%</div>
-        <div class="ph-kpi-rate on">달성률 123.4%</div>
-      </div>
-    </div>
+    <div class="di-panel di-compact" id="phase-kpi-di"></div>
+    <div class="ph-kpi-grid" id="phase-kpi-grid"></div>
 
     <!-- Charts -->
     <div class="chart-two-col">
@@ -1001,6 +1042,15 @@ body.dark .bm-item:hover{background:var(--bg-soft2)}
         </div>
         <div class="chart-wrap-sm"><canvas id="phase-radar-chart"></canvas></div>
       </div>
+    </div>
+
+    <!-- 사용자 차트 (Phase) -->
+    <div class="user-charts" id="phase-user-charts">
+      <div class="user-charts-hd">
+        <span class="sec-t">사용자 차트</span>
+        <button class="add-chart-btn" onclick="openChartBuilder('phase')">+ 차트 추가</button>
+      </div>
+      <div class="user-charts-grid" id="phase-charts-grid"></div>
     </div>
 
     <!-- Phase Comparison Table -->
@@ -1760,7 +1810,8 @@ window.DI_STATE = {
   'daily-tbl-di':{dims:['media'],idxs:['costs','impressions','clicks','ctr']},
   'phase-trend-di':{dims:['date','phase'],idxs:['ctr']},
   'phase-radar-di':{dims:['media','phase'],idxs:['costs_index','impressions_index','clicks_index','conversions_index']},
-  'phase-cmp-di':{dims:['phase'],idxs:['costs','impressions','ctr']}
+  'phase-cmp-di':{dims:['phase'],idxs:['costs','impressions','ctr']},
+  'phase-kpi-di':{dims:[],idxs:['costs','impressions','clicks','ctr']}
 };
 function findIdxLabel(id){
   for(var g=0;g<window.IDX_CATALOG.length;g++){
@@ -1794,10 +1845,13 @@ function renderDiPanel(panelId){
     '<span class="bm-wrap"><button class="di-tool-btn" onclick="bmOpen(event,\u0027'+panelId+'\u0027)" title="북마크">★ 북마크</button>'+
     '<div class="bm-pop" id="'+panelId+'-bm-pop"></div></span>'+
     '</span>';
+  // CEO 2026-06-08: 가독성 향상 — 라벨에 개수 카운터
+  var dimCount='<span class="di-counter">'+st.dims.length+'</span>';
+  var idxCount='<span class="di-counter">'+st.idxs.length+'</span>';
   panel.innerHTML=
-    '<div class="di-grp"><span class="di-lbl">\uB514\uBA58\uC158</span>'+dimPills+
+    '<div class="di-grp"><span class="di-lbl">\uB514\uBA58\uC158'+dimCount+'</span>'+dimPills+
     '<span class="di-add"><button class="di-addbtn" onclick="diOpenPop(event,\u0027'+panelId+'\u0027,\u0027dim\u0027)">+ \uCD94\uAC00</button><div class="di-addpop" id="'+panelId+'-dim-pop"></div></span></div>'+
-    '<div class="di-grp"><span class="di-lbl">\uC9C0\uD45C</span>'+idxPills+
+    '<div class="di-grp"><span class="di-lbl">\uC9C0\uD45C'+idxCount+'</span>'+idxPills+
     '<span class="di-add"><button class="di-addbtn" onclick="diOpenPop(event,\u0027'+panelId+'\u0027,\u0027idx\u0027)">+ \uCD94\uAC00</button><div class="di-addpop" id="'+panelId+'-idx-pop"></div></span></div>'+
     tools;
 }
@@ -1829,43 +1883,68 @@ function diRefreshPop(panelId,kind){
   var pop=document.getElementById(panelId+'-'+kind+'-pop');if(!pop)return;
   var st=window.DI_STATE[panelId];if(!st)return;
   var key=kind==='dim'?'dims':'idxs';
-  var html='';
+  // CEO 2026-06-08 14:52: 체크박스 다중선택, 검색창, 명시적 닫기 버튼
+  var bodyHtml='';
   if(kind==='dim'){
     window.DIM_CATALOG.forEach(function(d){
       var added=st[key].indexOf(d.id)>=0;
-      html+='<div class="it'+(added?' added':'')+'" '+(added?'':'onclick="diAdd(\u0027'+panelId+'\u0027,\u0027dim\u0027,\u0027'+d.id+'\u0027)"')+'>'+d.label+'</div>';
+      bodyHtml+='<div class="it'+(added?' added':'')+'" data-search="'+d.label.toLowerCase()+'" onclick="diToggle(event,\u0027'+panelId+'\u0027,\u0027dim\u0027,\u0027'+d.id+'\u0027)">'+
+        '<input type="checkbox" '+(added?'checked':'')+' onclick="event.stopPropagation()"><span class="it-lbl">'+d.label+'</span></div>';
     });
   } else {
     window.IDX_CATALOG.forEach(function(grp,gi){
-      html+='<div class="di-pop-group-bar"><span>'+grp.grp+'</span>'+
+      bodyHtml+='<div class="di-pop-group-bar"><span>'+grp.grp+'</span>'+
         '<button class="grp-bulk" onclick="diBulkAddGroup(event,\u0027'+panelId+'\u0027,'+gi+')">전체 선택</button></div>';
       grp.items.forEach(function(i){
         var added=st[key].indexOf(i.id)>=0;
         var tipHtml=i.tip?('<span class="tip" title="'+i.tip.replace(/"/g,"&quot;")+'">?</span>'):'';
-        html+='<div class="it'+(added?' added':'')+'" '+(added?'':'onclick="diAdd(\u0027'+panelId+'\u0027,\u0027idx\u0027,\u0027'+i.id+'\u0027)"')+'>'+i.label+tipHtml+'</div>';
+        bodyHtml+='<div class="it'+(added?' added':'')+'" data-search="'+i.label.toLowerCase()+'" onclick="diToggle(event,\u0027'+panelId+'\u0027,\u0027idx\u0027,\u0027'+i.id+'\u0027)">'+
+          '<input type="checkbox" '+(added?'checked':'')+' onclick="event.stopPropagation()"><span class="it-lbl">'+i.label+'</span>'+tipHtml+'</div>';
       });
     });
   }
-  pop.innerHTML=html;
+  pop.innerHTML='<div class="di-pop-search"><input type="text" placeholder="검색..." oninput="diPopSearch(this)" onclick="event.stopPropagation()"></div>'+
+    '<div class="di-pop-body">'+bodyHtml+'</div>'+
+    '<div class="di-pop-actions"><button onclick="diPopClose(event)">닫기</button><button class="primary" onclick="diPopClose(event)">완료</button></div>';
 }
+window.diPopSearch=function(input){
+  var q=(input.value||'').toLowerCase().trim();
+  var body=input.closest('.di-addpop').querySelector('.di-pop-body');if(!body)return;
+  body.querySelectorAll('.it').forEach(function(el){var ds=el.getAttribute('data-search')||'';el.style.display=(!q||ds.indexOf(q)>=0)?'flex':'none';});
+  body.querySelectorAll('.di-pop-group-bar').forEach(function(bar){var next=bar.nextElementSibling;var has=false;while(next&&!next.classList.contains('di-pop-group-bar')){if(next.style.display!=='none'){has=true;break;}next=next.nextElementSibling;}bar.style.display=has?'flex':'none';});
+};
+window.diToggle=function(ev,panelId,kind,id){
+  ev.stopPropagation();
+  var st=window.DI_STATE[panelId];if(!st)return;
+  var key=kind==='dim'?'dims':'idxs';
+  var idx=st[key].indexOf(id);
+  if(idx>=0)st[key].splice(idx,1);else st[key].push(id);
+  renderDiPanel(panelId);diRefreshPop(panelId,kind);applyDiChange(panelId);
+};
+window.diPopClose=function(ev){if(ev)ev.stopPropagation();document.querySelectorAll('.di-addpop.show').forEach(function(p){p.classList.remove('show');});};
 function applyDiChange(panelId){
   // 차트/달성률/테이블 재렌더 트리거
   if(panelId==='daily-sum-di'&&typeof window.renderDailySum==='function')window.renderDailySum();
   if(panelId==='daily-tbl-di'&&typeof window.renderDailyTbl==='function')window.renderDailyTbl();
   if((panelId==='phase-trend-di'||panelId==='phase-radar-di')&&typeof window.renderPhaseCharts==='function')window.renderPhaseCharts();
   if(panelId==='phase-cmp-di'&&typeof window.renderPhaseCmp==='function')window.renderPhaseCmp();
+  if(panelId==='phase-kpi-di'&&typeof window.renderPhaseKpi==='function')window.renderPhaseKpi();
 }
 document.addEventListener('click',function(e){
   if(e.target.closest('.di-add'))return;
-  document.querySelectorAll('.di-addpop.show').forEach(function(p){p.classList.remove('show');});
+  if(e.target.closest('.bm-wrap'))return;
+  document.querySelectorAll('.di-addpop.show,.bm-pop.show').forEach(function(p){p.classList.remove('show');});
 });
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){document.querySelectorAll('.di-addpop.show,.bm-pop.show').forEach(function(p){p.classList.remove('show');});}});
 window.addEventListener('DOMContentLoaded',function(){
-  ['daily-sum-di','daily-tbl-di','phase-trend-di','phase-radar-di','phase-cmp-di'].forEach(function(p){renderDiPanel(p);});
+  ['daily-sum-di','daily-tbl-di','phase-trend-di','phase-radar-di','phase-cmp-di','phase-kpi-di'].forEach(function(p){renderDiPanel(p);});
   // 초기 렌더
   if(typeof window.renderDailySum==='function')window.renderDailySum();
   if(typeof window.renderDailyTbl==='function')window.renderDailyTbl();
   if(typeof window.renderPhaseCharts==='function')window.renderPhaseCharts();
   if(typeof window.renderPhaseCmp==='function')window.renderPhaseCmp();
+  if(typeof window.renderPhaseKpi==='function')window.renderPhaseKpi();
+  if(typeof window.renderUserCharts==='function'){window.renderUserCharts('daily');window.renderUserCharts('phase');}
 });
 </script>
 
@@ -2041,6 +2120,172 @@ window.addEventListener('DOMContentLoaded',function(){
     var wrap=t.closest('.chart-card')||t.parentElement;
     if(wrap){wrap.classList.add('di-flash');setTimeout(function(){wrap.classList.remove('di-flash');},700);}
   };
+
+  // ---------- renderPhaseKpi (Phase KPI 카드 동적) ----------
+  // CEO 2026-06-08 14:53: Phase KPI에도 디멘션·지표 바
+  window.renderPhaseKpi=function(){
+    var grid=document.getElementById('phase-kpi-grid');if(!grid)return;
+    var st=window.DI_STATE['phase-kpi-di'];if(!st)return;
+    var html='';
+    st.idxs.forEach(function(idxId){
+      var meta=findIdx(idxId);if(!meta)return;
+      var unit=unitFor(idxId);
+      function fmtVal(v){
+        if(unit==='%')return v.toFixed(2)+'%';
+        if(unit==='₩'){if(v>=1e8)return '₩'+(v/1e8).toFixed(1)+'억';if(v>=1e6)return '₩'+(v/1e6).toFixed(1)+'M';return '₩'+Math.round(v).toLocaleString();}
+        if(v>=1e6)return (v/1e6).toFixed(2)+'M';if(v>=1e3)return (v/1e3).toFixed(1)+'K';return Math.round(v).toLocaleString();
+      }
+      var target,actual;
+      if(unit==='%'){target=rand(1.5,3.5);actual=target*rand(0.7,1.3);}
+      else if(unit==='₩'){target=rand(20,80)*1e6;actual=target*rand(0.65,1.15);}
+      else{target=Math.round(rand(2,7)*1e6);actual=Math.round(target*rand(0.65,1.15));}
+      var rate=(actual/target)*100;
+      var rateCls=(rate>=95)?'on':'off';
+      html+='<div class="ph-kpi-card">'+
+        '<div class="ph-kpi-lbl">'+meta.label+'</div>'+
+        '<div class="ph-kpi-target">목표: '+fmtVal(target)+'</div>'+
+        '<div class="ph-kpi-actual">'+fmtVal(actual)+'</div>'+
+        '<div class="ph-kpi-rate '+rateCls+'">달성률 '+rate.toFixed(1)+'%</div>'+
+        '</div>';
+    });
+    if(!html)html='<div style="color:#9CA3AF;padding:24px;text-align:center;grid-column:1/-1">지표를 추가해주세요</div>';
+    grid.innerHTML=html;
+    grid.classList.add('di-flash');setTimeout(function(){grid.classList.remove('di-flash');},700);
+  };
+
+  // ---------- User Charts System (CEO 2026-06-08 14:57) ----------
+  var USER_CHARTS_KEY='inn_rp_uc_v1';
+  function ucLoad(){try{return JSON.parse(localStorage.getItem(USER_CHARTS_KEY)||'{}');}catch(e){return {};}}
+  function ucSave(o){try{localStorage.setItem(USER_CHARTS_KEY,JSON.stringify(o));}catch(e){}}
+  function uid(){return 'uc_'+Math.random().toString(36).slice(2,9);}
+
+  // 기본 시드: Daily 페이지 샘플 2개
+  var UC_DEFAULTS={
+    daily:[
+      {id:'uc_dd_costs',name:'매체별 집행액 추이',type:'line',dim:'date',idxs:['costs']},
+      {id:'uc_dd_ctr',name:'매체별 CTR 비교',type:'bar',dim:'media',idxs:['ctr','ctr_link_click']}
+    ],
+    phase:[]
+  };
+
+  function ucGetAll(page){
+    var store=ucLoad();
+    if(!store[page]){store[page]=UC_DEFAULTS[page]?JSON.parse(JSON.stringify(UC_DEFAULTS[page])):[];ucSave(store);}
+    return store[page];
+  }
+  function ucSetAll(page,arr){var store=ucLoad();store[page]=arr;ucSave(store);}
+
+  window.renderUserCharts=function(page){
+    var grid=document.getElementById(page+'-charts-grid');if(!grid)return;
+    var list=ucGetAll(page);
+    if(!list.length){grid.innerHTML='<div style="grid-column:1/-1;padding:24px;text-align:center;color:#9CA3AF;border:1px dashed var(--bdr)">차트를 추가해보세요. (상단 “+ 차트 추가” 버튼)</div>';return;}
+    var html='';
+    list.forEach(function(c){
+      html+='<div class="user-chart-card" data-uc-id="'+c.id+'">'+
+        '<button class="uc-x" title="삭제" onclick="ucDelete(\u0027'+page+'\u0027,\u0027'+c.id+'\u0027)">✕</button>'+
+        '<div class="ccard-hd"><div><div class="ccard-t">'+(c.name||'차트')+'</div><div class="ccard-s">'+(c.dim?findDimLabel(c.dim):'')+' · '+(c.idxs||[]).map(function(i){var m=findIdx(i);return m?m.label:i;}).join(', ')+'</div></div></div>'+
+        '<div class="chart-wrap-sm"><canvas id="canvas-'+c.id+'"></canvas></div>'+
+        '</div>';
+    });
+    grid.innerHTML=html;
+    list.forEach(function(c){drawUserChart(c);});
+  };
+
+  function drawUserChart(c){
+    if(typeof Chart==='undefined')return;
+    var el=document.getElementById('canvas-'+c.id);if(!el)return;
+    var labels=labelsForDim(c.dim||'date');
+    var palette=['#4F46E5','#7C3AED','#EC4899','#F59E0B','#10B981','#3B82F6','#EF4444'];
+    var datasets=(c.idxs||[]).map(function(idxId,k){
+      var meta=findIdx(idxId);
+      var unit=unitFor(idxId);
+      var data=labels.map(function(){
+        if(unit==='%')return rand(0.4,4.5);
+        if(unit==='₩')return Math.round(rand(2,80)*1e6);
+        if(/_index$/.test(idxId))return rand(60,135);
+        return Math.round(rand(20,4500)*100);
+      });
+      var color=palette[k%palette.length];
+      return {label:meta?meta.label:idxId,data:data,backgroundColor:(c.type==='doughnut'||c.type==='radar')?palette.slice(0,labels.length):color,borderColor:color,fill:c.type==='radar',tension:.3,_idxId:idxId};
+    });
+    if(state.charts[c.id])state.charts[c.id].destroy();
+    var cfg={
+      type:c.type||'line',
+      data:{labels:labels,datasets:datasets.length?datasets:[{label:'-',data:[]}]},
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:datasets.length>1,position:'bottom',labels:{font:{size:11}}},tooltip:tooltipCfg()},
+        scales:(c.type==='doughnut'||c.type==='radar')?{}:{x:{grid:{display:false}},y:{grid:{color:'#F3F4F6'},ticks:{callback:function(v){return (typeof v==='number'&&Math.abs(v)>=1000)?(v/1000).toFixed(0)+'K':v;}}}}
+      }
+    };
+    if(c.type==='doughnut'){cfg.data.datasets=[{data:datasets[0]?datasets[0].data:[],backgroundColor:palette.slice(0,labels.length)}];}
+    state.charts[c.id]=new Chart(el,cfg);
+  }
+
+  window.ucDelete=function(page,id){
+    if(!confirm('이 차트를 삭제할까요?'))return;
+    var list=ucGetAll(page).filter(function(c){return c.id!==id;});
+    ucSetAll(page,list);
+    if(state.charts[id]){state.charts[id].destroy();delete state.charts[id];}
+    renderUserCharts(page);
+    if(typeof showToast==='function')showToast('차트가 삭제되었습니다.');
+  };
+
+  // ---------- Chart Builder Modal ----------
+  var CB_STATE={page:null,dim:null,idxs:[]};
+  window.openChartBuilder=function(page){
+    CB_STATE={page:page,dim:null,idxs:[]};
+    document.getElementById('cb-name').value='';
+    document.getElementById('cb-type').value='line';
+    cbRenderPills();
+    document.getElementById('cb-modal').classList.add('on');
+  };
+  window.closeChartBuilder=function(){document.getElementById('cb-modal').classList.remove('on');document.querySelectorAll('.cb-mini-pop.show').forEach(function(p){p.classList.remove('show');});};
+  function cbRenderPills(){
+    var d=document.getElementById('cb-dim-pills');
+    var dimHtml=CB_STATE.dim?'<span class="cb-pill" onclick="cbRemoveDim()">'+findDimLabel(CB_STATE.dim)+' <span class="x">✕</span></span>':'';
+    d.innerHTML=dimHtml+'<button class="cb-add-mini" onclick="cbOpenMiniPop(event,\u0027dim\u0027)">+ 선택</button><div class="cb-mini-pop" id="cb-dim-pop"></div>';
+    var i=document.getElementById('cb-idx-pills');
+    var idxHtml=CB_STATE.idxs.map(function(id){var m=findIdx(id);return '<span class="cb-pill" onclick="cbRemoveIdx(\u0027'+id+'\u0027)">'+(m?m.label:id)+' <span class="x">✕</span></span>';}).join('');
+    i.innerHTML=idxHtml+'<button class="cb-add-mini" onclick="cbOpenMiniPop(event,\u0027idx\u0027)">+ 선택</button><div class="cb-mini-pop" id="cb-idx-pop"></div>';
+  }
+  window.cbRemoveDim=function(){CB_STATE.dim=null;cbRenderPills();};
+  window.cbRemoveIdx=function(id){CB_STATE.idxs=CB_STATE.idxs.filter(function(x){return x!==id;});cbRenderPills();};
+  window.cbOpenMiniPop=function(ev,kind){
+    ev.stopPropagation();
+    document.querySelectorAll('.cb-mini-pop.show').forEach(function(p){p.classList.remove('show');});
+    var pop=document.getElementById('cb-'+kind+'-pop');if(!pop)return;
+    var html='';
+    if(kind==='dim'){
+      window.DIM_CATALOG.forEach(function(d){html+='<div class="it" onclick="cbPick(\u0027dim\u0027,\u0027'+d.id+'\u0027)">'+d.label+'</div>';});
+    } else {
+      window.IDX_CATALOG.forEach(function(grp){
+        grp.items.forEach(function(i){html+='<div class="it" onclick="cbPick(\u0027idx\u0027,\u0027'+i.id+'\u0027)">'+i.label+'</div>';});
+      });
+    }
+    pop.innerHTML=html;pop.classList.add('show');
+  };
+  window.cbPick=function(kind,id){
+    if(kind==='dim'){CB_STATE.dim=id;}
+    else {if(CB_STATE.idxs.indexOf(id)<0)CB_STATE.idxs.push(id);}
+    cbRenderPills();
+    document.querySelectorAll('.cb-mini-pop.show').forEach(function(p){p.classList.remove('show');});
+  };
+  window.saveChartBuilder=function(){
+    var name=(document.getElementById('cb-name').value||'').trim();
+    var type=document.getElementById('cb-type').value;
+    if(!name){if(typeof showToast==='function')showToast('차트 이름을 입력하세요.');return;}
+    if(!CB_STATE.dim){if(typeof showToast==='function')showToast('X축 디멘션을 선택하세요.');return;}
+    if(!CB_STATE.idxs.length){if(typeof showToast==='function')showToast('Y축 지표를 1개 이상 선택하세요.');return;}
+    var list=ucGetAll(CB_STATE.page);
+    list.push({id:uid(),name:name,type:type,dim:CB_STATE.dim,idxs:CB_STATE.idxs.slice()});
+    ucSetAll(CB_STATE.page,list);
+    closeChartBuilder();
+    renderUserCharts(CB_STATE.page);
+    if(typeof showToast==='function')showToast('차트가 추가되었습니다.');
+  };
+  // 외부 클릭 시 mini-pop 닫기
+  document.addEventListener('click',function(e){if(!e.target.closest('.cb-pills'))document.querySelectorAll('.cb-mini-pop.show').forEach(function(p){p.classList.remove('show');});});
 
   // ---------- renderPhaseCmp ----------
   // CEO 2026-06-08 14:38: Phase 비교 분석 표를 디멘션·지표 동적 패널로 변경
@@ -2374,7 +2619,7 @@ window.addEventListener('DOMContentLoaded',function(){
   function boot(){
     // initial render of all DI-driven content
     try{
-      ['daily-sum-di','daily-tbl-di','phase-trend-di','phase-radar-di','phase-cmp-di'].forEach(function(p){if(typeof renderDiPanel==='function')renderDiPanel(p);});
+      ['daily-sum-di','daily-tbl-di','phase-trend-di','phase-radar-di','phase-cmp-di','phase-kpi-di'].forEach(function(p){if(typeof renderDiPanel==='function')renderDiPanel(p);});
       if(window.renderDailySum)window.renderDailySum();
       if(window.renderDailyTbl)window.renderDailyTbl();
       // phase charts get rendered on initPhaseCharts page load
@@ -2402,6 +2647,45 @@ window.addEventListener('DOMContentLoaded',function(){
   if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',boot);}else{boot();}
 })();
 </script>
+
+
+<!-- Chart Builder Modal -->
+<div class="cb-modal" id="cb-modal">
+  <div class="cb-modal-inner">
+    <h3 id="cb-title">+ 새 차트 추가</h3>
+    <div class="cb-row">
+      <label>차트 이름</label>
+      <input type="text" id="cb-name" placeholder="예: Meta CTR 일별 추이" maxlength="40">
+    </div>
+    <div class="cb-row">
+      <label>차트 타입</label>
+      <select id="cb-type">
+        <option value="line">선 그래프 (Line)</option>
+        <option value="bar">막대 그래프 (Bar)</option>
+        <option value="doughnut">도넛 (Doughnut)</option>
+        <option value="radar">레이더 (Radar)</option>
+      </select>
+    </div>
+    <div class="cb-row">
+      <label>X축 디멘션 (1개)</label>
+      <div class="cb-pills" id="cb-dim-pills" style="position:relative">
+        <button class="cb-add-mini" onclick="cbOpenMiniPop(event,'dim')">+ 선택</button>
+        <div class="cb-mini-pop" id="cb-dim-pop"></div>
+      </div>
+    </div>
+    <div class="cb-row">
+      <label>Y축 지표 (1개 이상)</label>
+      <div class="cb-pills" id="cb-idx-pills" style="position:relative">
+        <button class="cb-add-mini" onclick="cbOpenMiniPop(event,'idx')">+ 선택</button>
+        <div class="cb-mini-pop" id="cb-idx-pop"></div>
+      </div>
+    </div>
+    <div class="cb-actions">
+      <button onclick="closeChartBuilder()">취소</button>
+      <button class="primary" onclick="saveChartBuilder()">차트 생성</button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
