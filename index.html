@@ -692,11 +692,8 @@ body.dark .bm-item:hover{background:var(--bg-soft2)}
             <div class="ccard-t">Meta CTR 일별 추이 — 이상치 탐지</div>
             <div class="ccard-s">현대차 투싼 6월 캠페인 · 최근 14일</div>
           </div>
-          <div style="display:flex;gap:12px;align-items:center">
-            <span style="display:flex;align-items:center;gap:4px;font-size:11px;color:#555"><span style="width:10px;height:10px;background:#4F46E5;display:inline-block"></span>CTR(%)</span>
-            <span style="display:flex;align-items:center;gap:4px;font-size:11px;color:#EF4444"><span style="width:10px;height:10px;border-radius:50%;background:#EF4444;display:inline-block"></span>이상치</span>
-          </div>
         </div>
+        <div class="di-panel di-compact" id="ai-ctr-di"></div>
         <div class="cwrap"><canvas id="ctr-chart"></canvas></div>
       </div>
       <div class="chart-card">
@@ -706,6 +703,7 @@ body.dark .bm-item:hover{background:var(--bg-soft2)}
             <div class="ccard-s">Tucson_Display_A 성과 저하 확인</div>
           </div>
         </div>
+        <div class="di-panel di-compact" id="ai-adset-di"></div>
         <div class="cwrap"><canvas id="adset-chart"></canvas></div>
       </div>
     </div>
@@ -978,12 +976,11 @@ body.dark .bm-item:hover{background:var(--bg-soft2)}
     </div>
 
     <!-- 사용자 차트 (Daily) -->
-    <div class="user-charts" id="daily-user-charts">
-      <div class="user-charts-hd" style="justify-content:flex-end">
-        <button class="add-chart-btn" onclick="openChartBuilder('daily')"><span class="acb-icon">+</span> 차트 추가</button>
-      </div>
-      <div class="user-charts-grid" id="daily-charts-grid"></div>
+    <div class="sec-hd" style="margin-bottom:12px">
+      <span class="sec-t">차트</span>
+      <button class="add-chart-btn" onclick="openChartBuilder('daily')"><span class="acb-icon">+</span> 차트 추가</button>
     </div>
+    <div class="user-charts-grid" id="daily-charts-grid" style="margin-bottom:20px"></div>
 
 
     <!-- Media Breakdown Table -->
@@ -1093,6 +1090,10 @@ body.dark .bm-item:hover{background:var(--bg-soft2)}
     <div class="ph-kpi-grid" id="phase-kpi-grid"></div>
 
     <!-- Charts -->
+    <div class="sec-hd" style="margin-bottom:12px">
+      <span class="sec-t">차트</span>
+      <button class="add-chart-btn" onclick="openChartBuilder('phase')"><span class="acb-icon">+</span> 차트 추가</button>
+    </div>
     <div class="chart-two-col">
       <div class="chart-card">
         <div class="di-panel di-compact" id="phase-trend-di"></div>
@@ -1116,13 +1117,8 @@ body.dark .bm-item:hover{background:var(--bg-soft2)}
       </div>
     </div>
 
-    <!-- 사용자 차트 (Phase) -->
-    <div class="user-charts" id="phase-user-charts">
-      <div class="user-charts-hd" style="justify-content:flex-end">
-        <button class="add-chart-btn" onclick="openChartBuilder('phase')"><span class="acb-icon">+</span> 차트 추가</button>
-      </div>
-      <div class="user-charts-grid" id="phase-charts-grid"></div>
-    </div>
+    <!-- 사용자 추가 차트 (Phase) -->
+    <div class="user-charts-grid" id="phase-charts-grid" style="margin-bottom:20px"></div>
 
     <!-- Phase Comparison Table -->
     <div class="sec-hd">
@@ -1399,7 +1395,7 @@ function initAICharts() {
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: {
-        legend: { display: false },
+        legend: { display: true, position: 'right', align: 'start', labels: { font: { size: 11 }, padding: 8, boxWidth: 12 } },
         tooltip: {
           callbacks: {
             label: ctx => {
@@ -1429,7 +1425,7 @@ function initAICharts() {
     },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
+      plugins: { legend: { display: true, position: 'right', align: 'start', labels: { font: { size: 11 }, padding: 8, boxWidth: 12 } } },
       scales: {
         x: { grid: { display: false } },
         y: { grid: { color: '#F3F4F6' }, ticks: { callback: v => v + '%' } }
@@ -1598,7 +1594,7 @@ function initPhaseCharts() {
     },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
+      plugins: { legend: { display: true, position: 'right', align: 'start', labels: { font: { size: 11 }, padding: 8, boxWidth: 12 } } },
       scales: {
         x: { grid: { display: false } },
         y: { grid: { color: '#F3F4F6' }, ticks: { callback: v => v + '%' } }
@@ -1621,7 +1617,7 @@ function initPhaseCharts() {
     },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
+      plugins: { legend: { display: true, position: 'right', align: 'start', labels: { font: { size: 11 }, padding: 8, boxWidth: 12 } } },
       scales: {
         r: {
           min: 0, max: 130,
@@ -2008,7 +2004,7 @@ document.addEventListener('click',function(e){
 });
 document.addEventListener('keydown',function(e){if(e.key==='Escape'){document.querySelectorAll('.di-addpop.show,.bm-pop.show').forEach(function(p){p.classList.remove('show');});}});
 window.addEventListener('DOMContentLoaded',function(){
-  ['daily-sum-di','daily-tbl-di','phase-trend-di','phase-radar-di','phase-cmp-di','phase-kpi-di'].forEach(function(p){renderDiPanel(p);});
+  ['daily-sum-di','daily-tbl-di','phase-trend-di','phase-radar-di','phase-cmp-di','phase-kpi-di','ai-ctr-di','ai-adset-di'].forEach(function(p){renderDiPanel(p);});
   // 초기 렌더
   if(typeof window.renderDailySum==='function')window.renderDailySum();
   if(typeof window.renderDailyTbl==='function')window.renderDailyTbl();
@@ -2249,7 +2245,7 @@ window.addEventListener('DOMContentLoaded',function(){
   window.renderUserCharts=function(page){
     var grid=document.getElementById(page+'-charts-grid');if(!grid)return;
     var list=ucGetAll(page);
-    if(!list.length){grid.innerHTML='<div style="grid-column:1/-1;padding:24px;text-align:center;color:#9CA3AF;border:1px dashed var(--bdr)">차트를 추가해보세요. (상단 “+ 차트 추가” 버튼)</div>';return;}
+    if(!list.length){grid.innerHTML='<div style="display:none"></div>';return;}
     var html='';
     list.forEach(function(c){
       html+='<div class="user-chart-card" data-uc-id="'+c.id+'">'+
@@ -2891,7 +2887,7 @@ window.addEventListener('DOMContentLoaded',function(){
   function boot(){
     // initial render of all DI-driven content
     try{
-      ['daily-sum-di','daily-tbl-di','phase-trend-di','phase-radar-di','phase-cmp-di','phase-kpi-di'].forEach(function(p){if(typeof renderDiPanel==='function')renderDiPanel(p);});
+      ['daily-sum-di','daily-tbl-di','phase-trend-di','phase-radar-di','phase-cmp-di','phase-kpi-di','ai-ctr-di','ai-adset-di'].forEach(function(p){if(typeof renderDiPanel==='function')renderDiPanel(p);});
       if(window.renderDailySum)window.renderDailySum();
       if(window.renderDailyTbl)window.renderDailyTbl();
       // phase charts get rendered on initPhaseCharts page load
@@ -3033,6 +3029,13 @@ window.kpiAddMedia=function(){var id='m_'+Date.now(); KPI_TREE.push({id:id,media
 window.kpiDelMedia=function(mid){KPI_TREE = KPI_TREE.filter(function(m){return m.id!==mid;}); kpiTreeRender();};
 document.addEventListener('DOMContentLoaded', function(){ kpiTreeRender(); });
 
+</script>
+<script>
+// AI 페이지 차트별 di-panel 초기 상태
+if (window.DI_STATE) {
+  window.DI_STATE['ai-ctr-di']   = window.DI_STATE['ai-ctr-di']   || {dims:['date'],  idxs:['ctr']};
+  window.DI_STATE['ai-adset-di'] = window.DI_STATE['ai-adset-di'] || {dims:['adset'], idxs:['ctr']};
+}
 </script>
 </body>
 </html>
