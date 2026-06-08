@@ -2549,7 +2549,7 @@ window.addEventListener('DOMContentLoaded',function(){
   };
 
   function aiAsstGreet(){
-    aiAsstAddMsg('ai','안녕하세요 👋 자연어로 화면을 조작해드릴게요. 아래 추천을 눌르거나 직접 입력하세요.<br><br>예)<br>· "매체별 CTR 비교 차트 만들어줘"<br>· "디멘션에 광고 상품 추가"<br>· "다크 모드"<br>· "지표에 ROAS 추가"');
+    aiAsstAddMsg('ai','안녕하세요 👋 자연어로 화면을 조작해드릴게요. <span style="font-size:11px;color:#9CA3AF">(베타: 규칙 기반. LLM 연동은 추후 적용)</span><br><br>예)<br>· "매체별 CTR 비교 차트 만들어줘"<br>· "매체별 조회수 차트 그려줘"<br>· "디멘션에 광고 상품 추가"<br>· "다크 모드"<br>· "지표에 ROAS 추가"');
   }
   function aiAsstRenderChips(){
     var box=document.getElementById('ai-asst-chips');if(!box)return;
@@ -2609,7 +2609,7 @@ window.addEventListener('DOMContentLoaded',function(){
     if(/차트|그래프|마들어|추가|그려/.test(t) && /차트|그래프|비교|추이/.test(t)){
       // 디멘션/지표 키워드 매칭
       var dimKw={'매체':'media','날짜':'date','일별':'date','일자':'date','주별':'week','주차':'week','월별':'month','월차':'month','phase':'phase','페이즈':'phase','광고파일':'ad_file','소재':'ad_file','서브카테고리':'sub_category','카테고리':'sub_category','광고상품':'product','광고 상품':'product','상품':'product','타겟팅':'targeting','타겟':'targeting','차종':'model','모델':'model'};
-      var idxKw={'ctr':'ctr','클릭률':'ctr','클릭':'clicks','노출':'impressions','imp':'impressions','집행':'costs','예산':'costs','비용':'costs','cost':'costs','cpc':'cpc','cpm':'cpm','roas':'roas','전환':'conversions','전환수':'conversions','매출':'revenue','참여':'engagements','재생':'video_play','영상':'video_play','링크클릭':'inline_link_clicks','링크ctr':'ctr_inline_link_click'};
+      var idxKw={'ctr':'ctr','클릭률':'ctr','클릭수':'clicks','클릭':'clicks','노출수':'impressions','노출':'impressions','imp':'impressions','집행':'costs','예산':'costs','비용':'costs','cost':'costs','cpc':'cpc','cpm':'cpm','roas':'roas','전환수':'conversions','전환':'conversions','매출':'revenue','참여':'engagements','재생수':'video_play','재생':'video_play','영상재생':'video_play','영상':'video_play','조회수':'video_play','조회':'video_play','뷰':'video_play','view':'video_play','views':'video_play','vtr':'vtr','완료율':'vtr','도달수':'reach','도달':'reach','reach':'reach','frequency':'frequency','빈도':'frequency','링크클릭':'inline_link_clicks','링크ctr':'ctr_inline_link_click'};
       var dim=null,idxs=[],chartType='line';
       Object.keys(dimKw).forEach(function(k){if(t.indexOf(k)>=0&&!dim)dim=dimKw[k];});
       Object.keys(idxKw).forEach(function(k){if(t.indexOf(k)>=0&&idxs.indexOf(idxKw[k])<0)idxs.push(idxKw[k]);});
@@ -2617,7 +2617,10 @@ window.addEventListener('DOMContentLoaded',function(){
       if(/도넛|doughnut|원형|pie|파이/.test(t))chartType='doughnut';
       if(/레이더|radar/.test(t))chartType='radar';
       if(!dim)dim=(chartType==='bar'||chartType==='doughnut')?'media':'date';
-      if(!idxs.length)idxs=['ctr'];
+      if(!idxs.length){
+        // 지표 키워드를 못 찾았으면 사용자에게 명확히 묻기 (이전엔 'ctr'로 강제 → CEO 16:48 피드백)
+        return {reply:'어떤 지표를 그릴지 알아듣지 못했어요. 다음 중 하나로 다시 말해주세요:<br>· 노출수, 클릭수, 클릭률(CTR), 집행액, 전환수, CPC, CPM, ROAS, 매출<br>· 조회수(영상 재생), 도달수, 완료율(VTR), 링크 클릭<br><br>예) "매체별 <b>조회수</b> 차트 그려줘"'};
+      }
       var name=q.replace(/만들어줘|만들어|만들어줘요|추가해줘|추가|그려줘|차트|그래프/g,'').trim()||(dim+' · '+idxs[0]);
       var ucPage=(page==='phase')?'phase':'daily';
       var newId='uc_'+Math.random().toString(36).slice(2,9);
