@@ -45,16 +45,17 @@ html,body{height:100%;font-family:'Pretendard Variable','Pretendard','Noto Sans 
 .step-lbl{display:flex;align-items:center;gap:14px;margin:0 0 18px;width:100%}
 .step-lbl .sd-line{flex:1;height:1px;background:var(--bdr)}
 .step-lbl .sd-lbl{font-size:11px;font-weight:700;letter-spacing:.2em;color:#6B7280;text-transform:uppercase}
-.mm-cta{background:linear-gradient(135deg,#2A2A2A 0%,#000 100%);color:#fff;padding:32px 36px;display:flex;align-items:center;gap:32px;position:relative;overflow:hidden;width:100%;box-sizing:border-box}
-.mm-cta::before{content:'';position:absolute;top:-30%;right:-5%;width:420px;height:420px;background:radial-gradient(circle,rgba(255,255,255,.08) 0%,transparent 65%);pointer-events:none}
-.mm-cta .mm-l{display:flex;align-items:center;gap:20px;flex-shrink:0;position:relative;z-index:1;min-width:280px}
+.mm-cta{background:linear-gradient(120deg,#5B21B6 0%,#1E3A8A 45%,#0F172A 100%);color:#fff;padding:32px 36px;display:flex;align-items:stretch;gap:0;position:relative;overflow:hidden;width:100%;box-sizing:border-box}
+.mm-cta::before{content:'';position:absolute;top:-40%;left:-10%;width:520px;height:520px;background:radial-gradient(circle,rgba(124,58,237,.35) 0%,transparent 60%);pointer-events:none;filter:blur(20px)}
+.mm-cta::after{content:'';position:absolute;bottom:-50%;right:-10%;width:520px;height:520px;background:radial-gradient(circle,rgba(59,130,246,.25) 0%,transparent 60%);pointer-events:none;filter:blur(20px)}
+.mm-cta .mm-l{display:flex;align-items:center;gap:24px;flex-shrink:0;position:relative;z-index:1;min-width:360px;justify-content:center;padding-right:32px}
 .mm-cta .mm-icon{width:56px;height:56px;background:#fff;color:#000;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .mm-cta .mm-icon svg{width:28px;height:28px;stroke:#000;stroke-width:2;fill:none}
 .mm-cta .mm-title-block{display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left}
 .mm-cta .mm-t{font-size:22px;font-weight:700;letter-spacing:-.01em;margin:0;line-height:1.2;color:#fff}
-.mm-cta .mm-s{font-size:11px;letter-spacing:.18em;color:rgba(255,255,255,.5);text-transform:uppercase;font-weight:600;margin:0}
-.mm-cta .mm-vbar{width:1px;align-self:stretch;background:rgba(255,255,255,.15);flex-shrink:0;position:relative;z-index:1}
-.mm-cta .mm-mid{flex:1;min-width:0;position:relative;z-index:1;text-align:left}
+.mm-cta .mm-s{font-size:11px;letter-spacing:.18em;color:rgba(255,255,255,.6);text-transform:uppercase;font-weight:600;margin:0}
+.mm-cta .mm-vbar{width:1px;align-self:stretch;background:rgba(255,255,255,.2);flex-shrink:0;position:relative;z-index:1}
+.mm-cta .mm-mid{flex:1;min-width:0;position:relative;z-index:1;text-align:left;padding:0 32px;display:flex;align-items:center}
 .mm-cta .mm-d{font-size:13px;color:rgba(255,255,255,.78);line-height:1.7;margin:0}
 .mm-cta .mm-btn{background:#fff;color:#000;border:none;padding:14px 28px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:8px;flex-shrink:0;position:relative;z-index:1;transition:all .2s}
 .mm-cta .mm-btn:hover{background:#4F46E5;color:#fff;transform:translateX(4px)}
@@ -552,7 +553,7 @@ body.dark .bm-item:hover{background:var(--bg-soft2)}
         </div>
         <div class="mm-title-block">
           <h2 class="mm-t">미디어믹스 설정</h2>
-          <span class="mm-s">MEDIA MIX PLANNING</span>
+          <span class="mm-s">MEDIA MIX SETUP</span>
         </div>
       </div>
       <div class="mm-vbar"></div>
