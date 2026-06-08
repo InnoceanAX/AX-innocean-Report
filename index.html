@@ -335,7 +335,9 @@ body.dark .di-addpop .it .tip{background:var(--bg-soft2);color:var(--text4);bord
 .di-pill.fade-out{animation:diPillOut .3s ease forwards}
 @keyframes diPillIn{from{opacity:0;transform:translateY(-4px) scale(.9)}to{opacity:1;transform:none}}
 @keyframes diPillOut{from{opacity:1;transform:none}to{opacity:0;transform:translateY(-4px) scale(.9)}}
-.sum-card.fade-in,.daily-mtable-col-fade{animation:colFade .3s ease}
+.sum-card.fade-in,@keyframes diFlash{0%{box-shadow:0 0 0 2px var(--ind);background:rgba(79,70,229,.04)}100%{box-shadow:0 0 0 0 transparent;background:transparent}}
+.di-flash{animation:diFlash .7s ease-out}
+.daily-mtable-col-fade{animation:colFade .3s ease}
 @keyframes colFade{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
 
 /* card collapse chevron */
@@ -1565,16 +1567,18 @@ function handleChatKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();se
 function autoResizeChat(el){if(!el)return;el.style.height='auto';el.style.height=Math.min(el.scrollHeight,140)+'px';}
 function addChatMsg(role,text,time){
   var box=document.getElementById('chat-msgs');if(!box)return;
-  var d=document.createElement('div');d.className='chat-msg '+(role==='user'?'user':'bot');
-  var av=role==='user'?'\uB098':'AI';
+  // CEO 2026-06-08: PRELOADED와 동일한 cmsg/cav/cbubble 양식으로 통일 (이전에는 chat-msg/cava/cbubb가 분리되어 사용자 메시지가 시각적으로 안 보였음)
+  var roleClass = (role==='user') ? 'user' : 'ai';
+  var d=document.createElement('div');d.className='cmsg '+roleClass;
+  var av = (role==='user') ? '\uB098' : 'AI';
   var t=time||new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
-  d.innerHTML='<div class="cava">'+av+'</div><div><div class="cbubb">'+text.replace(/\n/g,'<br>')+'</div><div class="ctm">'+t+'</div></div>';
+  d.innerHTML='<div class="cav">'+av+'</div><div><div class="cbubble">'+text.replace(/\n/g,'<br>')+'</div><div class="ctime">'+t+'</div></div>';
   box.appendChild(d);box.scrollTop=box.scrollHeight;
 }
 function showTypingChat(){
   var box=document.getElementById('chat-msgs');if(!box)return;
-  var d=document.createElement('div');d.id='rp_typing';d.className='chat-msg bot';
-  d.innerHTML='<div class="cava">AI</div><div><div class="cbubb"><div class="tdots"><span></span><span></span><span></span></div></div></div>';
+  var d=document.createElement('div');d.id='rp_typing';d.className='cmsg ai';
+  d.innerHTML='<div class="cav">AI</div><div><div class="cbubble"><div class="tdots"><span></span><span></span><span></span></div></div></div>';
   box.appendChild(d);box.scrollTop=box.scrollHeight;
 }
 function hideTypingChat(){var el=document.getElementById('rp_typing');if(el)el.remove();}
@@ -1682,6 +1686,7 @@ window.DIM_CATALOG = [
   {id:'advertiser',label:'광고주',col:'advertiser_standardized'},
   {id:'country',label:'국가',col:'country'},
   {id:'phase',label:'Phase',col:'phase'},
+  {id:'product',label:'상품',col:'product_name'},
   {id:'creative',label:'크리에이티브',col:'creative'},
   {id:'creative_type',label:'크리에이티브 유형',col:'creative_type'},
   {id:'date',label:'일자',col:'date'},
@@ -1981,12 +1986,21 @@ window.addEventListener('DOMContentLoaded',function(){
   };
 
   // ---------- renderDailyTbl ----------
-  var MEDIA_FIXED=['전체','Google','Meta','네이버','카카오'];
+  // CEO 2026-06-08 14:36: 1열을 선택된 디멘션을 따라 동적으로 변경 (이전엔 MEDIA 하드코딩)
   window.renderDailyTbl=function(){
     var t=document.getElementById('daily-mtable');if(!t)return;
     var st=window.DI_STATE['daily-tbl-di'];if(!st)return;
     var idxs=st.idxs.slice();
-    var thead='<tr><th class="sortable" data-col="0">매체 <span class="arrow">↕</span></th>';
+    // 1열 디멘션: 선택된 dim 중 첫 항목. 없으면 media 기본.
+    var firstDim=(st.dims&&st.dims[0])||'media';
+    var dimMeta=null;
+    for(var i=0;i<window.DIM_CATALOG.length;i++){if(window.DIM_CATALOG[i].id===firstDim){dimMeta=window.DIM_CATALOG[i];break;}}
+    var dimLabel=dimMeta?dimMeta.label:'매체';
+    var rowLabels=labelsForDim(firstDim);
+    // 전체 합계 행을 맨 위에 추가
+    var allLabels=['전체'].concat(rowLabels);
+
+    var thead='<tr><th class="sortable" data-col="0">'+dimLabel+' <span class="arrow">↕</span></th>';
     idxs.forEach(function(idxId,ii){
       var meta=findIdx(idxId);if(!meta)return;
       var unit=unitFor(idxId);
@@ -1994,13 +2008,13 @@ window.addEventListener('DOMContentLoaded',function(){
     });
     thead+='</tr>';
     var rows='';
-    MEDIA_FIXED.forEach(function(m,ri){
+    allLabels.forEach(function(m,ri){
       var rowCls=(ri===0)?'total-row':'';
       var tr='<tr class="'+rowCls+'"><td>'+m+'</td>';
       idxs.forEach(function(idxId){
         var unit=unitFor(idxId);var v;
         if(unit==='%')v=rand(0.4,5.5).toFixed(2)+'%';
-        else if(unit==='원')v='₩'+(Math.round(rand(2,80)*1e6)).toLocaleString();
+        else if(unit==='₩')v='₩'+(Math.round(rand(2,80)*1e6)).toLocaleString();
         else if(/_index$/.test(idxId)){var rv=rand(60,135);v=rv.toFixed(1)+'%';}
         else v=(Math.round(rand(20,9000)*100)).toLocaleString();
         tr+='<td class="daily-mtable-col-fade">'+v+'</td>';
@@ -2010,6 +2024,9 @@ window.addEventListener('DOMContentLoaded',function(){
     });
     t.innerHTML='<thead>'+thead+'</thead><tbody>'+rows+'</tbody>';
     attachSortableTo(t);
+    // 변화 시각화: 카드 깜빡임
+    var wrap=t.closest('.chart-card')||t.parentElement;
+    if(wrap){wrap.classList.add('di-flash');setTimeout(function(){wrap.classList.remove('di-flash');},700);}
   };
 
   // ---------- renderPhaseCharts ----------
@@ -2087,7 +2104,8 @@ window.addEventListener('DOMContentLoaded',function(){
       advertiser:['현대자동차','기아','LG'],
       country:['KR','US','JP'],
       creative:['Creative A','Creative B','Creative C'],
-      creative_type:['이미지','영상','캐러셀']
+      creative_type:['이미지','영상','캐러셀'],
+      product:['투싼','싼타페','쏘렌토','EV6','아이오닉5','G80']
     };
     return m[dimId]||['A','B','C','D'];
   }
