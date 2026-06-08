@@ -398,6 +398,40 @@ body.dark .cb-add-mini{background:var(--bg-soft);color:var(--text2)}
 .cb-mini-pop .it:hover{background:#EEF2FF}
 body.dark .cb-mini-pop{background:var(--card-bg);border-color:var(--border-c)}
 body.dark .cb-mini-pop .it{color:var(--text)}
+.ai-fab{position:fixed;right:24px;bottom:24px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#4F46E5,#7C3AED);color:#fff;border:none;font-size:24px;cursor:pointer;box-shadow:0 6px 24px rgba(79,70,229,.45);z-index:8000;display:none;align-items:center;justify-content:center;transition:all .2s}
+.ai-fab:hover{transform:scale(1.08);box-shadow:0 8px 30px rgba(79,70,229,.6)}
+.ai-fab.on{display:flex}
+.ai-fab.active{background:#000}
+.ai-asst{position:fixed;right:-420px;top:64px;bottom:0;width:400px;background:#fff;border-left:1px solid var(--bdr);box-shadow:-4px 0 24px rgba(0,0,0,.08);z-index:7900;display:flex;flex-direction:column;transition:right .25s ease-out}
+.ai-asst.show{right:0}
+body.dark .ai-asst{background:var(--card-bg);border-color:var(--border-c)}
+.ai-asst-hd{padding:12px 16px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#EEF2FF,#F5F3FF)}
+body.dark .ai-asst-hd{background:linear-gradient(135deg,#1E1B4B,#2E1065);border-color:var(--border-c)}
+.ai-asst-hd .t{font-size:13px;font-weight:700;color:#1F2937;display:flex;align-items:center;gap:6px}
+body.dark .ai-asst-hd .t{color:var(--text)}
+.ai-asst-hd .x{background:transparent;border:none;font-size:18px;cursor:pointer;color:#6B7280;padding:4px 8px}
+.ai-asst-hd .x:hover{color:#000}
+body.dark .ai-asst-hd .x:hover{color:var(--text)}
+.ai-asst-msgs{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.ai-asst-msgs .cmsg{max-width:100%}
+.ai-asst-msgs .cbubble{max-width:280px;font-size:12.5px}
+.ai-asst-chips{padding:10px 14px;background:linear-gradient(135deg,#F9FAFB,#EEF2FF);border-top:1px solid var(--bdr);display:flex;flex-wrap:wrap;gap:6px}
+body.dark .ai-asst-chips{background:var(--bg-soft2);border-color:var(--border-c)}
+.ai-asst-chip{padding:5px 10px;font-size:11px;background:#fff;border:1px solid rgba(79,70,229,.2);color:#4338CA;border-radius:14px;cursor:pointer;font-family:inherit;transition:all .15s}
+.ai-asst-chip:hover{background:linear-gradient(135deg,#4F46E5,#7C3AED);color:#fff;border-color:transparent}
+body.dark .ai-asst-chip{background:var(--bg-soft);color:#C7D2FE;border-color:rgba(79,70,229,.4)}
+.ai-asst-in{padding:10px 14px;border-top:1px solid var(--bdr);background:#fff;display:flex;gap:6px}
+body.dark .ai-asst-in{background:var(--card-bg);border-color:var(--border-c)}
+.ai-asst-in input{flex:1;height:34px;padding:0 12px;border:1px solid var(--bdr);font-size:13px;font-family:inherit;outline:none;color:#1F2937;background:#fff;border-radius:0}
+body.dark .ai-asst-in input{background:var(--bg-soft2);color:var(--text);border-color:var(--border-c)}
+.ai-asst-in input:focus{border-color:var(--ind)}
+.ai-asst-in button{height:34px;padding:0 14px;background:#000;color:#fff;border:1px solid #000;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;border-radius:0}
+.ai-asst-in button:hover{background:var(--ind);border-color:var(--ind)}
+.ai-act-pill{display:inline-flex;align-items:center;gap:4px;margin-top:6px;padding:4px 8px;font-size:11px;background:#ECFDF5;color:#065F46;border:1px solid #A7F3D0;border-radius:10px}
+body.dark .ai-act-pill{background:rgba(16,185,129,.15);color:#6EE7B7;border-color:rgba(16,185,129,.3)}
+.ai-undo-btn{margin-top:6px;margin-left:6px;padding:3px 8px;font-size:11px;background:#fff;color:#4F46E5;border:1px solid #C7D2FE;cursor:pointer;font-family:inherit;border-radius:10px}
+.ai-undo-btn:hover{background:#4F46E5;color:#fff}
+body.dark .ai-undo-btn{background:var(--bg-soft);color:#A5B4FC;border-color:rgba(79,70,229,.4)}
 .daily-mtable-col-fade{animation:colFade .3s ease}
 @keyframes colFade{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
 
@@ -2287,6 +2321,198 @@ window.addEventListener('DOMContentLoaded',function(){
   // 외부 클릭 시 mini-pop 닫기
   document.addEventListener('click',function(e){if(!e.target.closest('.cb-pills'))document.querySelectorAll('.cb-mini-pop.show').forEach(function(p){p.classList.remove('show');});});
 
+  // ---------- AI Assistant: 자연어 명령 파서 + 실행 (CEO 15:04) ----------
+  var AI_UNDO=[];
+  var AI_CURRENT_PAGE='daily';
+  var AI_CHIPS={
+    daily:[
+      '매체별 CTR 비교 차트 만들어줘',
+      '디멘션에 상품 추가해줘',
+      '지표에 ROAS 추가해줘',
+      '다크 모드로 바꿔'
+    ],
+    phase:[
+      'Phase별 노출수 레이더 차트 만들어줘',
+      'KPI에 CPC 추가해줘',
+      '다크 모드',
+      'PNG로 다운로드'
+    ]
+  };
+
+  window.toggleAiAsst=function(){
+    var panel=document.getElementById('ai-asst');
+    var fab=document.getElementById('ai-fab');
+    if(!panel||!fab)return;
+    if(panel.classList.contains('show')){panel.classList.remove('show');fab.classList.remove('active');fab.innerHTML='💬';}
+    else{panel.classList.add('show');fab.classList.add('active');fab.innerHTML='✕';aiAsstRenderChips();if(!document.getElementById('ai-asst-msgs').children.length)aiAsstGreet();}
+  };
+
+  function aiAsstGreet(){
+    aiAsstAddMsg('ai','안녕하세요 👋 자연어로 화면을 조작해드릴게요. 아래 추천을 눌르거나 직접 입력하세요.<br><br>예)<br>· "매체별 CTR 비교 차트 만들어줘"<br>· "디멘션에 상품 추가"<br>· "다크 모드"<br>· "지표에 ROAS 추가"');
+  }
+  function aiAsstRenderChips(){
+    var box=document.getElementById('ai-asst-chips');if(!box)return;
+    var chips=AI_CHIPS[AI_CURRENT_PAGE]||AI_CHIPS.daily;
+    box.innerHTML=chips.map(function(c){return '<button class="ai-asst-chip" onclick="aiAsstChip(\u0027'+c.replace(/'/g,"\u0027")+'\u0027)">'+c+'</button>';}).join('');
+  }
+  window.aiAsstChip=function(q){document.getElementById('ai-asst-input').value=q;aiAsstSend();};
+  window.aiAsstKey=function(e){if(e.key==='Enter'){e.preventDefault();aiAsstSend();}};
+
+  function aiAsstAddMsg(role,html){
+    var box=document.getElementById('ai-asst-msgs');if(!box)return;
+    var d=document.createElement('div');d.className='cmsg '+(role==='ai'?'ai':'user');
+    var av=role==='ai'?'AI':'나';var t=new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+    d.innerHTML='<div class="cav">'+av+'</div><div><div class="cbubble">'+html+'</div><div class="ctime">'+t+'</div></div>';
+    box.appendChild(d);box.scrollTop=box.scrollHeight;
+    return d;
+  }
+
+  window.aiAsstSend=function(){
+    var inp=document.getElementById('ai-asst-input');if(!inp)return;
+    var q=(inp.value||'').trim();if(!q)return;
+    inp.value='';
+    aiAsstAddMsg('user',q);
+    // 페이지 감지
+    var activePage=document.querySelector('.page.active');
+    var pageId=activePage?activePage.id.replace('page-',''):'daily';
+    AI_CURRENT_PAGE=(pageId==='phase')?'phase':'daily';
+    setTimeout(function(){
+      var result=aiParse(q,AI_CURRENT_PAGE);
+      var html=result.reply;
+      if(result.action){html+='<div><span class="ai-act-pill">✅ '+result.actionLabel+'</span>';
+        if(result.undo){html+='<button class="ai-undo-btn" onclick="aiUndo(\u0027'+result.undoId+'\u0027)">되돌리기</button>';}
+        html+='</div>';
+      }
+      aiAsstAddMsg('ai',html);
+      if(result.action){try{result.action();}catch(err){console.error('ai-action',err);}}
+    },350);
+  };
+
+  // ---------- 룰 기반 자연어 파서 ----------
+  function aiParse(q,page){
+    var t=q.toLowerCase().replace(/\s+/g,' ');
+    // 1. 다크 모드
+    if(/다크|dark|다크모드/.test(t)){
+      var on=/켜|설정|해줘|키|바꿔|on|롤|클/.test(t)||true;
+      return {reply:'다크 모드를 전환합니다.',action:function(){if(typeof toggleDarkMode==='function')toggleDarkMode();},actionLabel:'다크 모드 전환'};
+    }
+    // 2. PNG 다운로드 (현재 페이지 첫 차트)
+    if(/png|다운로드|저장|내려|download/.test(t)){
+      return {reply:'현재 폄시 보는 차트를 PNG로 저장합니다.',action:function(){
+        var canv=document.querySelector('.page.active canvas');
+        if(canv){var url=canv.toDataURL('image/png');var a=document.createElement('a');a.href=url;a.download='chart_'+Date.now()+'.png';a.click();}
+        else if(typeof showToast==='function')showToast('차트가 없습니다');
+      },actionLabel:'PNG 다운로드'};
+    }
+    // 3. 차트 만들기 (가장 강력)
+    if(/차트|그래프|마들어|추가|그려/.test(t) && /차트|그래프|비교|추이/.test(t)){
+      // 디멘션/지표 키워드 매칭
+      var dimKw={'매체':'media','날짜':'date','일별':'date','일자':'date','주별':'week','주차':'week','월별':'month','월차':'month','phase':'phase','페이즈':'phase','광고파일':'ad_file','소재':'ad_file','서브카테고리':'sub_category','카테고리':'sub_category','상품':'product'};
+      var idxKw={'ctr':'ctr','클릭률':'ctr','클릭':'clicks','노출':'impressions','imp':'impressions','집행':'costs','예산':'costs','비용':'costs','cost':'costs','cpc':'cpc','cpm':'cpm','roas':'roas','전환':'conversions','전환수':'conversions','매출':'revenue','참여':'engagements','재생':'video_play','영상':'video_play','링크클릭':'inline_link_clicks','링크ctr':'ctr_inline_link_click'};
+      var dim=null,idxs=[],chartType='line';
+      Object.keys(dimKw).forEach(function(k){if(t.indexOf(k)>=0&&!dim)dim=dimKw[k];});
+      Object.keys(idxKw).forEach(function(k){if(t.indexOf(k)>=0&&idxs.indexOf(idxKw[k])<0)idxs.push(idxKw[k]);});
+      if(/막대|bar|비교/.test(t))chartType='bar';
+      if(/도넛|doughnut|원형|pie|파이/.test(t))chartType='doughnut';
+      if(/레이더|radar/.test(t))chartType='radar';
+      if(!dim)dim=(chartType==='bar'||chartType==='doughnut')?'media':'date';
+      if(!idxs.length)idxs=['ctr'];
+      var name=q.replace(/만들어줘|만들어|만들어줘요|추가해줘|추가|그려줘|차트|그래프/g,'').trim()||(dim+' · '+idxs[0]);
+      var ucPage=(page==='phase')?'phase':'daily';
+      var newId='uc_'+Math.random().toString(36).slice(2,9);
+      return {reply:'새 차트를 추가했습니다. <b>'+name+'</b> ('+chartType+', X: '+findDimLabel(dim)+', Y: '+idxs.map(function(i){var m=findIdx(i);return m?m.label:i;}).join(', ')+')',
+        action:function(){
+          var key='inn_rp_uc_v1';
+          var store={};try{store=JSON.parse(localStorage.getItem(key)||'{}');}catch(e){}
+          if(!store[ucPage])store[ucPage]=[];
+          store[ucPage].push({id:newId,name:name,type:chartType,dim:dim,idxs:idxs});
+          localStorage.setItem(key,JSON.stringify(store));
+          if(typeof renderUserCharts==='function')renderUserCharts(ucPage);
+        },
+        actionLabel:'차트 추가 완료',
+        undo:true,
+        undoId:'chart:'+ucPage+':'+newId
+      };
+    }
+    // 4. 디멘션 추가/제거 (di-panel 토글)
+    if(/디멘션|구분|축/.test(t) && /추가|넣어|포함/.test(t)){
+      var dimKw2={'매체':'media','날짜':'date','일별':'date','주별':'week','월별':'month','phase':'phase','페이즈':'phase','광고파일':'ad_file','소재':'ad_file','카테고리':'sub_category','상품':'product','디바이스':'device','기기':'device','성별':'gender','연령':'age'};
+      var picked=null;
+      Object.keys(dimKw2).forEach(function(k){if(t.indexOf(k)>=0&&!picked)picked=dimKw2[k];});
+      if(!picked)return {reply:'어느 디멘션을 추가할지 알아듣을 수 없어요. 예: "디멘션에 상품 추가해줘"'};
+      var panels=(page==='phase')?['phase-trend-di','phase-radar-di','phase-cmp-di','phase-kpi-di']:['daily-sum-di','daily-tbl-di'];
+      return {reply:'모든 패널의 디멘션에 <b>'+findDimLabel(picked)+'</b>을 추가합니다.',
+        action:function(){
+          panels.forEach(function(p){var st=window.DI_STATE[p];if(st&&st.dims.indexOf(picked)<0)st.dims.push(picked);if(typeof renderDiPanel==='function')renderDiPanel(p);if(typeof applyDiChange==='function')applyDiChange(p);});
+        },
+        actionLabel:'디멘션 추가 완료',
+        undo:true,undoId:'dim+:'+picked+':'+panels.join(',')
+      };
+    }
+    // 5. 지표 추가
+    if(/지표|메트릭|metric/.test(t) && /추가|넣어/.test(t)){
+      var idxKw2={'ctr':'ctr','클릭률':'ctr','클릭':'clicks','노출':'impressions','집행':'costs','예산':'costs','cpc':'cpc','cpm':'cpm','roas':'roas','전환':'conversions','매출':'revenue','링크클릭':'inline_link_clicks'};
+      var idxPicked=null;
+      Object.keys(idxKw2).forEach(function(k){if(t.indexOf(k)>=0&&!idxPicked)idxPicked=idxKw2[k];});
+      if(!idxPicked)return {reply:'어느 지표인지 파악 못했어요. 예: "지표에 ROAS 추가"'};
+      var panels2=(page==='phase')?['phase-trend-di','phase-radar-di','phase-cmp-di','phase-kpi-di']:['daily-sum-di','daily-tbl-di'];
+      return {reply:'모든 패널의 지표에 <b>'+(findIdx(idxPicked)?findIdx(idxPicked).label:idxPicked)+'</b>를 추가합니다.',
+        action:function(){
+          panels2.forEach(function(p){var st=window.DI_STATE[p];if(st&&st.idxs.indexOf(idxPicked)<0)st.idxs.push(idxPicked);if(typeof renderDiPanel==='function')renderDiPanel(p);if(typeof applyDiChange==='function')applyDiChange(p);});
+        },actionLabel:'지표 추가 완료',undo:true,undoId:'idx+:'+idxPicked+':'+panels2.join(',')
+      };
+    }
+    // 6. Phase/Daily 이동
+    if(/phase|페이즈|성수기/.test(t) && (/이동|가줘|보여|열어|페이지/.test(t)||/페이즈$/.test(t.trim()))){
+      return {reply:'Phase 분석 페이지로 이동합니다.',action:function(){if(typeof showPage==='function')showPage('phase');},actionLabel:'페이지 전환'};
+    }
+    if(/일별|daily/.test(t) && /이동|가줘|보여|열어/.test(t)){
+      return {reply:'일별 리포트 페이지로 이동합니다.',action:function(){if(typeof showPage==='function')showPage('daily');},actionLabel:'페이지 전환'};
+    }
+    // 7. 도움말
+    if(/도움|뭐|할 수|help|사용법|명령/.test(t)){
+      return {reply:'제가 도와드릴 수 있는 것:<br>· 차트 추가: "매체별 CTR 막대차트"<br>· 디멘션 추가: "디멘션에 상품 추가"<br>· 지표 추가: "지표에 ROAS 추가"<br>· 페이지 이동: "Phase 보여줘"<br>· 다크모드: "다크모드"<br>· PNG 저장: "차트 PNG로 저장"'};
+    }
+    // fallback
+    return {reply:'명령을 더 명확히 해주세요. 예:<br>· "Google과 Meta CTR 비교 차트 만들어줘"<br>· "디멘션에 상품 추가"<br>· "다크 모드"<br><br>"도움말"을 입력하면 전체 명령을 알려드려요.'};
+  }
+
+  // ---------- Undo ----------
+  window.aiUndo=function(undoId){
+    var parts=undoId.split(':');var kind=parts[0];
+    if(kind==='chart'){
+      var page=parts[1];var id=parts[2];
+      var key='inn_rp_uc_v1';var store={};try{store=JSON.parse(localStorage.getItem(key)||'{}');}catch(e){}
+      if(store[page])store[page]=store[page].filter(function(c){return c.id!==id;});
+      localStorage.setItem(key,JSON.stringify(store));
+      if(typeof renderUserCharts==='function')renderUserCharts(page);
+    } else if(kind==='dim+'){
+      var dimId=parts[1];var panels=parts[2].split(',');
+      panels.forEach(function(p){var st=window.DI_STATE[p];if(!st)return;var idx=st.dims.indexOf(dimId);if(idx>=0)st.dims.splice(idx,1);if(typeof renderDiPanel==='function')renderDiPanel(p);if(typeof applyDiChange==='function')applyDiChange(p);});
+    } else if(kind==='idx+'){
+      var idxId=parts[1];var panels=parts[2].split(',');
+      panels.forEach(function(p){var st=window.DI_STATE[p];if(!st)return;var idx=st.idxs.indexOf(idxId);if(idx>=0)st.idxs.splice(idx,1);if(typeof renderDiPanel==='function')renderDiPanel(p);if(typeof applyDiChange==='function')applyDiChange(p);});
+    }
+    if(typeof showToast==='function')showToast('되돌렸습니다');
+  };
+
+  // FAB 표시 토글 (Daily/Phase 페이지에서만)
+  function aiAsstUpdateFab(){
+    var page=document.querySelector('.page.active');
+    var fab=document.getElementById('ai-fab');if(!fab||!page)return;
+    var id=page.id.replace('page-','');
+    if(id==='daily'||id==='phase'){fab.classList.add('on');}
+    else{fab.classList.remove('on');var p=document.getElementById('ai-asst');if(p)p.classList.remove('show');fab.classList.remove('active');fab.innerHTML='💬';}
+  }
+  // showPage 후킹
+  if(typeof window._origShowPage==='undefined' && typeof window.showPage==='function'){
+    window._origShowPage=window.showPage;
+    window.showPage=function(id){window._origShowPage(id);aiAsstUpdateFab();};
+  }
+  // 초기 FAB 표시
+  setTimeout(aiAsstUpdateFab,200);
+
+
   // ---------- renderPhaseCmp ----------
   // CEO 2026-06-08 14:38: Phase 비교 분석 표를 디멘션·지표 동적 패널로 변경
   window.renderPhaseCmp=function(){
@@ -2684,6 +2910,22 @@ window.addEventListener('DOMContentLoaded',function(){
       <button onclick="closeChartBuilder()">취소</button>
       <button class="primary" onclick="saveChartBuilder()">차트 생성</button>
     </div>
+  </div>
+</div>
+
+
+<!-- AI Assistant (CEO 2026-06-08 15:04) -->
+<button class="ai-fab" id="ai-fab" onclick="toggleAiAsst()" title="AI 비서">💬</button>
+<div class="ai-asst" id="ai-asst">
+  <div class="ai-asst-hd">
+    <span class="t">✦ AI 비서 <span style="font-size:10px;color:#6B7280;font-weight:400;margin-left:6px">자연어로 화면 조작</span></span>
+    <button class="x" onclick="toggleAiAsst()" title="닫기">✕</button>
+  </div>
+  <div class="ai-asst-msgs" id="ai-asst-msgs"></div>
+  <div class="ai-asst-chips" id="ai-asst-chips"></div>
+  <div class="ai-asst-in">
+    <input type="text" id="ai-asst-input" placeholder="예: 'CTR 차트 만들어줘'" onkeydown="aiAsstKey(event)">
+    <button onclick="aiAsstSend()">전송</button>
   </div>
 </div>
 
