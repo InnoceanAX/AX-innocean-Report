@@ -114,7 +114,10 @@ body.dark .sol-divider .sd-lbl{color:var(--text2)}
 .cb-type-card:hover{border-color:#9CA3AF}
 .cb-type-card.on{border-color:#000;background:#0B0F19;color:#fff}
 .cb-type-card.on .cb-tc-sub{color:#D1D5DB}
-.cb-tc-icon{font-size:22px;line-height:1;margin-bottom:6px}
+.cb-tc-icon{display:flex;align-items:center;justify-content:center;width:36px;height:36px;margin:0 auto 8px;color:#000}
+.cb-tc-icon svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.cb-type-card.on .cb-tc-icon{color:#fff}
+body.dark .cb-tc-icon{color:var(--text)}
 .cb-tc-label{font-size:12.5px;font-weight:700}
 .cb-tc-sub{font-size:10.5px;color:#767676;margin-top:3px}
 .cb-tc-recommended{position:relative}
@@ -463,12 +466,17 @@ body.dark .cb-row label{color:var(--text2)}
 .cb-row input[type=text],.cb-row select{width:100%;height:34px;padding:0 10px;border:1px solid var(--bdr);font-size:13px;font-family:inherit;outline:none;background:#fff;color:#1F2937;border-radius:0;box-sizing:border-box}
 body.dark .cb-row input,body.dark .cb-row select{background:var(--bg-soft2);color:var(--text);border-color:var(--border-c)}
 .cb-row input:focus,.cb-row select:focus{border-color:var(--ind)}
-.cb-pills{display:flex;gap:6px;flex-wrap:wrap;padding:8px;background:#F9FAFB;border:1px solid var(--bdr);min-height:36px;align-items:center}
+/* CEO 2026-06-08 18:44 — 디멘션/지표 바 디자인을 차트 추가 모달에 그대로 적용 */
+.cb-pills{display:flex;gap:6px;flex-wrap:wrap;padding:12px 16px;background:#F9FAFB;border:1px solid var(--bdr);min-height:48px;align-items:center}
 body.dark .cb-pills{background:var(--bg-soft2);border-color:var(--border-c)}
-.cb-pill{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;font-size:11px;background:var(--ind);color:#fff;border-radius:10px;cursor:pointer}
-.cb-pill .x{font-size:10px;opacity:.8}
-.cb-add-mini{font-size:11px;background:#fff;border:1px dashed var(--bdr);color:#6B7280;padding:3px 8px;cursor:pointer;font-family:inherit;border-radius:10px}
-body.dark .cb-add-mini{background:var(--bg-soft);color:var(--text2)}
+.cb-pill{display:inline-flex;align-items:center;gap:4px;padding:5px 10px;background:#1F2937;color:#fff;border:1px solid #1F2937;border-radius:14px;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;user-select:none}
+.cb-pill:hover{background:#000;border-color:#000}
+.cb-pill .x{font-size:10px;opacity:.7;margin-left:2px}
+.cb-add-mini{background:#fff;border:1px dashed #9CA3AF;padding:5px 10px;font-size:12px;color:#555;cursor:pointer;font-family:inherit;border-radius:14px;transition:all .15s}
+.cb-add-mini:hover{border-color:#000;color:#000}
+body.dark .cb-add-mini{background:var(--bg-soft);color:var(--text2);border-color:#9CA3AF}
+body.dark .cb-pill{background:#E5E7EB;color:#0F172A;border-color:#E5E7EB}
+body.dark .cb-pill:hover{background:#fff;border-color:#fff}
 .cb-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
 .cb-actions button{height:34px;padding:0 16px;font-size:13px;border:1px solid var(--bdr);background:#fff;cursor:pointer;font-family:inherit;color:#1F2937;border-radius:0;font-weight:600}
 .cb-actions button.primary{background:#000;color:#fff;border-color:#000}
@@ -3397,22 +3405,22 @@ window.addEventListener('DOMContentLoaded',function(){
       <label>차트 타입 <span class="cb-auto-hint" id="cb-type-auto" style="font-size:11px;color:#9CA3AF;margin-left:6px"></span></label>
       <div class="cb-type-cards" id="cb-type-cards">
         <button type="button" class="cb-type-card" data-type="line" onclick="cbPickType('line')">
-          <div class="cb-tc-icon">📈</div>
+          <div class="cb-tc-icon"><svg viewBox="0 0 24 24"><path d="M3 17l5-6 4 3 6-8 3 4"/><circle cx="8" cy="11" r="1"/><circle cx="12" cy="14" r="1"/><circle cx="18" cy="6" r="1"/></svg></div>
           <div class="cb-tc-label">선 그래프</div>
           <div class="cb-tc-sub">추이 · %</div>
         </button>
         <button type="button" class="cb-type-card" data-type="bar" onclick="cbPickType('bar')">
-          <div class="cb-tc-icon">📊</div>
+          <div class="cb-tc-icon"><svg viewBox="0 0 24 24"><rect x="4" y="12" width="3" height="8"/><rect x="10" y="7" width="3" height="13"/><rect x="16" y="4" width="3" height="16"/></svg></div>
           <div class="cb-tc-label">막대 그래프</div>
           <div class="cb-tc-sub">비교 · 정수</div>
         </button>
         <button type="button" class="cb-type-card" data-type="doughnut" onclick="cbPickType('doughnut')">
-          <div class="cb-tc-icon">🍩</div>
+          <div class="cb-tc-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 3 L12 8"/><path d="M21 12 L16 12"/></svg></div>
           <div class="cb-tc-label">도넛</div>
           <div class="cb-tc-sub">구성비</div>
         </button>
         <button type="button" class="cb-type-card" data-type="radar" onclick="cbPickType('radar')">
-          <div class="cb-tc-icon">📡</div>
+          <div class="cb-tc-icon"><svg viewBox="0 0 24 24"><polygon points="12,3 21,9 18,20 6,20 3,9"/><polygon points="12,7 17,10 15,17 9,17 7,10"/><line x1="12" y1="3" x2="12" y2="20"/><line x1="3" y1="9" x2="21" y2="9"/></svg></div>
           <div class="cb-tc-label">레이더</div>
           <div class="cb-tc-sub">다지표 비교</div>
         </button>

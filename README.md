@@ -44,6 +44,14 @@ curl -sI "$URL/" | grep -i "cache-control\|content-length"
 
 ---
 
+## 문서
+
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — 절대 규칙, 디자인 토큰, 라우팅
+- [docs/FEATURES.md](docs/FEATURES.md) — 페이지별 기능 명세, AI 비서 패턴, 차트 빌더
+- [CHANGELOG.md](CHANGELOG.md) — 변경 이력
+
+---
+
 ## 아키텍처 원칙 (절대 규칙)
 
 - **단일 HTML 파일** (`index.html`) — 모든 CSS/JS 인라인
