@@ -3846,6 +3846,10 @@ if (window.DI_STATE) {
           '<div style="font-size:18px;font-weight:700;color:var(--text)">'+fmtKRW(p.costs)+'</div>'+
           '<div style="font-size:11px;color:#767676">노출 '+fmtN(p.imp)+' · 클릭 '+fmtN(p.clk)+' · CTR '+(p.ctr*100).toFixed(2)+'%</div></div></div>';
       }).join(""); }
+      var ct=document.querySelector("#phase-cmp-table tbody");
+      if(ct){ ct.innerHTML=phases.map(function(p){ var gray='<td style="color:#9CA3AF">—</td>';
+        return '<tr><td><strong>'+p.name+'</strong></td><td>'+p.start.slice(5)+'~'+p.end.slice(5)+'</td>'+
+          gray+'<td>'+fmtKRW(p.costs)+'</td>'+gray+ gray+'<td>'+fmtN(p.imp)+'</td>'+gray+ gray+'<td>'+(p.ctr*100).toFixed(2)+'%</td>'+gray+'</tr>'; }).join(""); }
       drawPhaseCharts(phases);
     }catch(e){ if(grid)grid.innerHTML='<div style="padding:14px;color:#B45309">조회 오류</div>'; }
   };
@@ -3980,8 +3984,21 @@ if (window.DI_STATE) {
   }
 
   // ── AI 페이지 차트 실데이터 + 예시대화 라벨 ────────────────────────────
+  async function aiRealKpis(){
+    var row=document.querySelector("#page-ai .kpi-row"); if(!row)return;
+    function fN(v){ if(v==null)return "—"; if(v>=1e6)return (v/1e6).toFixed(1)+"M"; if(v>=1e3)return (v/1e3).toFixed(1)+"K"; return Math.round(v).toLocaleString(); }
+    function fK(v){ if(v==null)return "—"; if(v>=1e8)return "₩"+(v/1e8).toFixed(1)+"억"; if(v>=1e6)return "₩"+(v/1e6).toFixed(1)+"M"; return "₩"+Math.round(v).toLocaleString(); }
+    function dl(c,pv){ if(pv==null||!pv)return {t:"→ 기준",c:"neu"}; var d=(c-pv)/pv*100; return {t:(d>=0?"▲ +":"▼ ")+d.toFixed(0)+"% vs 전일",c:Math.abs(d)<3?"neu":(d>=0?"good":"bad")}; }
+    function card(l,v,x){ return '<div class="kpi-card"><div class="kpi-lbl">'+l+'</div><div class="kpi-val">'+v+'</div><div class="kpi-d '+x.c+'">'+x.t+'</div></div>'; }
+    try{ var rs=await q(["date"],["impressions","clicks","costs_krw","ctr"],null,3000);
+      rs=rs.filter(function(r){return r.date;}).sort(function(a,b){return a.date<b.date?-1:1;}); if(!rs.length)return;
+      var L=rs[rs.length-1], P=rs[rs.length-2]||{};
+      row.innerHTML=card("CTR (전체)",(L.ctr*100).toFixed(2)+"%",dl(L.ctr,P.ctr))+card("노출수 (전체)",fN(L.impressions),dl(L.impressions,P.impressions))+card("클릭수 (전체)",fN(L.clicks),dl(L.clicks,P.clicks))+card("집행액 (KRW)",fK(L.costs_krw),dl(L.costs_krw,P.costs_krw));
+      var sub=row.parentNode&&row.parentNode.querySelector('div[style*="color:#767676"]'); if(sub)sub.textContent=L.date+" 기준 · 전체 매체 (실데이터)";
+    }catch(e){}
+  }
   var _origAI=window.initAICharts;
-  window.initAICharts=function(){ if(_origAI)try{_origAI();}catch(e){}
+  window.initAICharts=function(){ if(_origAI)try{_origAI();}catch(e){} aiRealKpis();
     // 차트 캔버스 찾아 실데이터로 덮어쓰기 (Meta CTR 일별, 매체별)
     setTimeout(function(){ drawRealChart("ctr-chart",{dim:"date",idxs:["ctr"],type:"line"});
       drawRealChart("adset-chart",{dim:"media",idxs:["impressions"],type:"bar"}); },300);
@@ -3991,6 +4008,36 @@ if (window.DI_STATE) {
   // 초기 1회 반영
   function boot(){ if(window.renderUserCharts){window.renderUserCharts("daily");window.renderUserCharts("phase");} if(window.renderDailySum)window.renderDailySum(); }
   var t2=0;(function w(){ if(window.__RPT||t2>40){ setTimeout(boot,200); } else { t2++; setTimeout(w,150); } })();
+})();
+</script>
+
+<!-- ===== UX 가이드: 페이지별 무엇/어떻게 스트립 + 데이터현황 상단 ===== -->
+<style>
+#rpt-cov-bar{display:none !important;}
+.rpt-guide{border:1px solid var(--bdr,#E5E7EB);border-left:4px solid var(--ind,#4F46E5);background:var(--bg-soft,#FAFAFA);padding:12px 16px;margin:0 0 16px;border-radius:0;}
+.rpt-guide .rg-t{font-size:14px;font-weight:800;color:var(--text,#000)}
+.rpt-guide .rg-d{font-size:12.5px;color:var(--text3,#555);margin-top:3px;line-height:1.5}
+.rpt-guide .rg-cov{font-size:11px;color:var(--text4,#767676);margin-top:7px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.rpt-guide .rg-dot{width:6px;height:6px;background:#16A34A;display:inline-block}
+.rpt-guide .rg-badge{font-size:10px;font-weight:700;color:var(--ind,#4F46E5);border:1px solid var(--ind,#4F46E5);padding:1px 6px}
+</style>
+<script>
+(function(){
+  if(!window.reportApi||!window.reportApi.enabled())return;
+  var GUIDE={
+    daily:{t:"일별 리포트",d:"매체·캠페인별 <b>실제 집행 성과</b>입니다. 상단의 <b>디멘션·지표 칩</b>을 누르면(매체·캠페인·일자 / 집행액·노출·CTR 등) 아래 표·차트가 즉시 갱신됩니다."},
+    phase:{t:"Phase 분석",d:"<b>캠페인을 선택</b>하면 집행 기간을 4단계(사전준비·런칭·성수기·마무리)로 나눠 <b>단계별 성과</b>를 비교합니다."},
+    mm:{t:"미디어믹스 설정",d:"캠페인별 <b>매체 KPI 목표</b>를 설정합니다. 상단 <b>'매체별 목표 저장'</b>을 누르면 일별 리포트의 <b>달성률</b>에 반영됩니다."},
+    ai:{t:"AI 어시스턴트",d:"자연어로 질문하고 이상치를 확인합니다. <b style='color:#B45309'>AI 응답·이상치 카드는 예시(LLM 미연동)</b>이며 <b>차트·데이터현황은 실데이터</b>입니다."}
+  };
+  var covLine="";
+  function buildCov(c){ var pf=(c&&c.platforms)||[]; if(!pf.length)return ""; var mx=pf.map(function(p){return p.last_date;}).sort().slice(-1)[0]||"-"; var names=pf.map(function(p){return p.platform;}).join(" · "); return '<span class="rg-dot"></span>데이터 현황: <b>'+names+'</b> · 최신 '+mx+' <span class="rg-badge">집행액 KRW 환산</span>'; }
+  function strip(page){ var g=GUIDE[page]; if(!g)return null; var el=document.createElement("div"); el.className="rpt-guide"; el.setAttribute("data-rg",page); el.innerHTML='<div class="rg-t">'+g.t+'</div><div class="rg-d">'+g.d+'</div><div class="rg-cov">'+(covLine||"데이터 현황 불러오는 중…")+'</div>'; return el; }
+  function mount(){ [["daily","page-daily"],["phase","page-phase"],["mm","page-mm"],["ai","page-ai"]].forEach(function(x){ var page=x[0], pageEl=document.getElementById(x[1]); if(!pageEl)return; if(pageEl.querySelector('[data-rg="'+page+'"]'))return; var host=pageEl.querySelector(".pwrap")||pageEl; var s=strip(page); if(!s)return; if(page==="ai"){ pageEl.insertBefore(s,pageEl.firstChild); } else { host.insertBefore(s,host.firstChild); } }); }
+  function refreshCov(){ document.querySelectorAll(".rpt-guide .rg-cov").forEach(function(e){ if(covLine)e.innerHTML=covLine; }); }
+  window.reportApi.coverage().then(function(c){ covLine=buildCov(c); mount(); refreshCov(); }).catch(function(){ mount(); });
+  var _os=window.showPage; if(_os){ window.showPage=function(id){ try{_os(id);}catch(e){} setTimeout(mount,60); }; }
+  if(document.readyState!=="loading")setTimeout(mount,400); else document.addEventListener("DOMContentLoaded",function(){setTimeout(mount,400);});
 })();
 </script>
 </body>
