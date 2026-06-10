@@ -3813,7 +3813,7 @@ if (window.DI_STATE) {
       rows=rows.filter(function(r){return r.campaign_name;}).sort(function(a,b){return (b.costs_krw||0)-(a.costs_krw||0);}).slice(0,40);
       sel.innerHTML=rows.map(function(r){return '<option>'+r.campaign_name+'</option>';}).join("");
       sel.onchange=window.renderPhaseData;
-      window.renderPhaseData();
+      // 차트는 phase 진입 시점에 그림(showPage 래퍼) — init 시점 캔버스 선점 방지
     }catch(e){}
   }
   function splitPhases(dmin,dmax){
@@ -3864,6 +3864,133 @@ if (window.DI_STATE) {
   function init(){ injectTargetBar(); loadPhaseCampaigns(); }
   // 카탈로그(날짜) 준비 대기 후 실행
   var tries=0; (function wait(){ if(window.__RPT||tries>40){ init(); } else { tries++; setTimeout(wait,150); } })();
+})();
+</script>
+
+<!-- ============================================================
+     실데이터 일원화 — 사용자 차트/Phase 차트/AI 차트/MM 캠페인목록의 mock 제거
+     ============================================================ -->
+<script>
+(function(){
+  if(!window.reportApi||!window.reportApi.enabled())return;
+  var DIM2API={media:"platform",campaign:"campaign_name",brand_name:"brand_name",advertiser:"advertiser_name",country:"country",date:"date",year:"year",month:"month"};
+  var IDX2API={costs:"costs_krw",costs_krw:"costs_krw",costs_usd:"costs_usd",cpm:"cpm",cpc:"cpc",impressions:"impressions",reach:"reach",frequency:"frequency",clicks:"clicks",link_clicks:"clicks",ctr:"ctr",ctr_link_click:"ctr",conversions:"conversions",conversion_rate:"conversion_rate"};
+  var INDEX_BASE={impressions_index:"impressions",clicks_index:"clicks",conversions_index:"conversions",costs_index:"costs_krw"};
+  var PCT={ctr:1,conversion_rate:1,ctr_link_click:1};
+  function metricFor(id){ return IDX2API[id]||INDEX_BASE[id]||null; }
+  function dates(){ var R=window.__RPT||{}; return {f:R.fullFrom||"2024-01-01",t:R.to||"2026-06-30"}; }
+  async function q(dims,mets,filters,limit){ var d=dates();
+    var r=await fetch(window.reportApi.base()+"/api/query",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({dims:dims,metrics:mets,filters:filters||{},date_from:d.f,date_to:d.t,limit:limit||2000})});
+    if(!r.ok)throw new Error(r.status); return (await r.json()).rows||[]; }
+  var PAL=["#4F46E5","#7C3AED","#EC4899","#F59E0B","#10B981","#3B82F6","#EF4444","#1F2937"];
+
+  // 스펙(dim,idxs,type) -> 실데이터 차트
+  async function drawRealChart(canvasId,spec){
+    if(typeof Chart==="undefined")return; var el=document.getElementById(canvasId); if(!el)return;
+    var dim=spec.dim||"date"; var apiDim=DIM2API[dim];
+    var idxs=(spec.idxs||[]).filter(function(i){return metricFor(i);});
+    var note=function(t){ var ex=Chart.getChart(el); if(ex)ex.destroy(); var p=el.parentNode; var d=p.querySelector(".rpt-cnote"); if(!d){d=document.createElement("div");d.className="rpt-cnote";d.style.cssText="padding:16px;color:#767676;font-size:12px;text-align:center";p.appendChild(d);} d.textContent=t; el.style.display="none"; };
+    var clearNote=function(){ var d=el.parentNode.querySelector(".rpt-cnote"); if(d)d.remove(); el.style.display=""; };
+    if(!apiDim){ note("'"+dim+"' 디멘션은 아직 실데이터 미지원(수집예정)"); return; }
+    if(!idxs.length){ note("선택 지표가 실데이터 미지원(수집예정)"); return; }
+    var mets=idxs.map(metricFor);
+    try{
+      var rows=await q([apiDim],mets,null,3000);
+      rows=rows.filter(function(r){return r[apiDim]!=null;});
+      if(dim==="date"){ rows.sort(function(a,b){return a.date<b.date?-1:1;}); if(rows.length>40){var step=Math.ceil(rows.length/40);rows=rows.filter(function(_,i){return i%step===0;});} }
+      else { rows.sort(function(a,b){return (b[mets[0]]||0)-(a[mets[0]]||0);}); rows=rows.slice(0,12); }
+      clearNote();
+      var labels=rows.map(function(r){return r[apiDim];});
+      var ds=idxs.map(function(id,k){ var met=metricFor(id); var sc=PCT[id]?100:1;
+        var m=(typeof locIdx==="function"&&locIdx(id))||{label:id};
+        return {label:m.label||id,data:rows.map(function(r){return r[met]!=null?+(r[met]*sc).toFixed(2):null;}),
+          backgroundColor:(spec.type==="doughnut"||spec.type==="radar")?PAL.slice(0,labels.length):PAL[k%PAL.length],
+          borderColor:PAL[k%PAL.length],fill:spec.type==="radar",tension:.3}; });
+      var ex=Chart.getChart(el); if(ex)ex.destroy();
+      var isCirc=(spec.type==="doughnut"||spec.type==="radar");
+      var data=spec.type==="doughnut"?{labels:labels,datasets:[{data:ds[0]?ds[0].data:[],backgroundColor:PAL.slice(0,labels.length)}]}:{labels:labels,datasets:ds};
+      new Chart(el,{type:spec.type||"line",data:data,options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:true,position:spec.type==="doughnut"?"right":"bottom",labels:{font:{size:11},padding:10,boxWidth:12}}},
+        scales:isCirc?{}:{x:{grid:{display:false}},y:{grid:{color:"#F3F4F6"},ticks:{callback:function(v){return Math.abs(v)>=1e6?(v/1e6).toFixed(1)+"M":(Math.abs(v)>=1e3?(v/1e3).toFixed(0)+"K":v);}}}}}});
+    }catch(e){ note("데이터 조회 오류"); }
+  }
+  function locIdx(id){var c=window.IDX_CATALOG||[];for(var g=0;g<c.length;g++){var it=c[g].items;for(var i=0;i<it.length;i++)if(it[i].id===id)return it[i];}return null;}
+  function locDimLabel(id){var c=window.DIM_CATALOG||[];for(var i=0;i<c.length;i++)if(c[i].id===id)return c[i].label;return id;}
+
+  // ── 사용자 차트(기본+빌더) 실데이터 재구현 ──────────────────────────────
+  var DEF_DAILY=[
+    {id:"uc_real_costs",name:"일자별 집행액(KRW) 추이",type:"line",dim:"date",idxs:["costs_krw"]},
+    {id:"uc_real_media",name:"매체별 집행액(KRW)",type:"bar",dim:"media",idxs:["costs_krw"]}
+  ];
+  window.renderUserCharts=function(page){
+    var grid=document.getElementById(page+"-charts-grid"); if(!grid)return;
+    var store={}; try{store=JSON.parse(localStorage.getItem("inn_rp_uc_v2")||"{}");}catch(e){}
+    var list=(store[page]||[]).filter(function(c){return c.id!=="uc_dd_costs"&&c.id!=="uc_dd_ctr";});
+    if(page==="daily"&&!list.some(function(c){return c.id.indexOf("uc_real")===0;})) list=DEF_DAILY.concat(list);
+    if(!list.length){ grid.innerHTML=""; return; }
+    grid.innerHTML=list.map(function(c){
+      return '<div class="user-chart-card" data-uc-id="'+c.id+'">'+
+        '<button class="uc-x" title="삭제" data-pg="'+page+'" data-uc="'+c.id+'" onclick="ucDelete(this.dataset.pg,this.dataset.uc)">✕</button>'+
+        '<div class="ccard-hd"><div><div class="ccard-t">'+(c.name||"차트")+'</div>'+
+        '<div class="ccard-s">'+locDimLabel(c.dim)+' · '+(c.idxs||[]).map(function(i){var m=locIdx(i);return m?m.label:i;}).join(", ")+' <span style="color:var(--ind,#4F46E5)">· 실데이터</span></div></div></div>'+
+        '<div class="di-panel di-compact" id="uc-di-'+c.id+'"></div>'+
+        '<div class="chart-wrap-sm"><canvas id="canvas-'+c.id+'"></canvas></div></div>';
+    }).join("");
+    list.forEach(function(c){ var pid="uc-di-"+c.id;
+      if(window.DI_STATE){ window.DI_STATE[pid]=window.DI_STATE[pid]||{dims:c.dim?[c.dim]:[],idxs:(c.idxs||[]).slice(),page:page,target:c.id}; }
+      if(typeof renderDiPanel==="function")renderDiPanel(pid);
+      drawRealChart("canvas-"+c.id,c);
+    });
+  };
+
+  // ── 칩 변경 시 재렌더 (uc 차트 + phase) ────────────────────────────────
+  var _origApply=window.applyDiChange;
+  window.applyDiChange=function(panelId){
+    if(_origApply)try{_origApply(panelId);}catch(e){}
+    if(panelId&&panelId.indexOf("uc-di-")===0){ var st=window.DI_STATE[panelId]||{}; var id=panelId.slice(6);
+      drawRealChart("canvas-"+id,{dim:(st.dims||[])[0],idxs:st.idxs||[],type:undefined}); }
+  };
+
+  // ── Phase 차트 버그 수정: showPage 래퍼로 진입 시 캔버스 선점 해제 후 실데이터 ──
+  var _origShow=window.showPage;
+  if(_origShow){ window.showPage=function(id){
+    if(id==="phase"&&typeof Chart!=="undefined"){ ["phase-trend-chart","phase-radar-chart"].forEach(function(cid){ var c=document.getElementById(cid); if(c){ var ex=Chart.getChart(c); if(ex)ex.destroy(); } }); }
+    try{ _origShow(id); }catch(e){}
+    if(id==="phase"&&window.renderPhaseData)setTimeout(window.renderPhaseData,150);
+  }; }
+
+  // ── daily 요약 기본을 매체별로(목표=매체레벨이라 달성률 보이게) ───────────
+  if(window.DI_STATE&&window.DI_STATE["daily-sum-di"]) window.DI_STATE["daily-sum-di"].dims=["media"];
+
+  // ── Media Mix Setup 캠페인 목록 실데이터 ───────────────────────────────
+  var _origMM=window.initMMPage;
+  window.initMMPage=function(){ if(_origMM)try{_origMM();}catch(e){} fillRealCampaigns(); };
+  async function fillRealCampaigns(){
+    var tb=document.querySelector("#camp-table tbody"); if(!tb)return;
+    try{
+      var rows=await q(["campaign_name","brand_name"],["costs_krw"],null,2000);
+      rows=rows.filter(function(r){return r.campaign_name;}).sort(function(a,b){return (b.costs_krw||0)-(a.costs_krw||0);}).slice(0,25);
+      tb.innerHTML=rows.map(function(r,i){
+        return '<tr class="camp-row"><td><strong>'+r.campaign_name+'</strong></td>'+
+          '<td>'+(r.brand_name||"-")+'</td><td>집행액 '+(r.costs_krw>=1e8?(r.costs_krw/1e8).toFixed(1)+"억":Math.round((r.costs_krw||0)/1e6)+"M")+'</td>'+
+          '<td><span class="camp-status active">데이터 있음</span></td>'+
+          '<td><button class="dbtn" onclick="showMMDetail(0)">설정</button></td></tr>';
+      }).join("");
+    }catch(e){}
+  }
+
+  // ── AI 페이지 차트 실데이터 + 예시대화 라벨 ────────────────────────────
+  var _origAI=window.initAICharts;
+  window.initAICharts=function(){ if(_origAI)try{_origAI();}catch(e){}
+    // 차트 캔버스 찾아 실데이터로 덮어쓰기 (Meta CTR 일별, 매체별)
+    setTimeout(function(){ drawRealChart("ctr-chart",{dim:"date",idxs:["ctr"],type:"line"});
+      drawRealChart("adset-chart",{dim:"media",idxs:["impressions"],type:"bar"}); },300);
+    var cm=document.getElementById("chat-msgs"); if(cm&&!document.getElementById("rpt-ai-ex")){ var n=document.createElement("div"); n.id="rpt-ai-ex"; n.style.cssText="font-size:11px;color:#B45309;padding:6px 10px;border:1px dashed #D97706;margin-bottom:8px"; n.textContent="아래 대화는 예시입니다 (AI 자연어 응답은 베타·LLM 미연동). 차트·커버리지는 실데이터."; cm.insertBefore(n,cm.firstChild); }
+  };
+
+  // 초기 1회 반영
+  function boot(){ if(window.renderUserCharts){window.renderUserCharts("daily");window.renderUserCharts("phase");} if(window.renderDailySum)window.renderDailySum(); }
+  var t2=0;(function w(){ if(window.__RPT||t2>40){ setTimeout(boot,200); } else { t2++; setTimeout(w,150); } })();
 })();
 </script>
 </body>
