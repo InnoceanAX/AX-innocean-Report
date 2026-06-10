@@ -1,0 +1,8 @@
+# SA 키/자격증명만 차단 (requirements.txt 등 설정파일은 포함)
+*-key.json
+*credentials*.json
+*-[0-9a-f]*.json
+*token*.txt
+__pycache__/
+*.pyc
+.env
