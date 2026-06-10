@@ -757,8 +757,8 @@ body.dark .bm-item:hover{background:var(--bg-soft2)}
       <div class="chart-card">
         <div class="ccard-hd">
           <div>
-            <div class="ccard-t">Meta CTR 일별 추이 — 이상치 탐지</div>
-            <div class="ccard-s">현대차 투싼 6월 캠페인 · 최근 14일</div>
+            <div class="ccard-t">CTR 일별 추이 (전체 매체 · 실데이터)</div>
+            <div class="ccard-s">전체 매체 · 일별 CTR 추이</div>
           </div>
         </div>
         <div class="di-panel di-compact" id="ai-ctr-di"></div>
@@ -767,8 +767,8 @@ body.dark .bm-item:hover{background:var(--bg-soft2)}
       <div class="chart-card">
         <div class="ccard-hd">
           <div>
-            <div class="ccard-t">원인 분석 — 광고 세트별 CTR</div>
-            <div class="ccard-s">Tucson_Display_A 성과 저하 확인</div>
+            <div class="ccard-t">매체별 노출수 (실데이터)</div>
+            <div class="ccard-s">전체 매체 · 실데이터</div>
           </div>
         </div>
         <div class="di-panel di-compact" id="ai-adset-di"></div>
@@ -3921,6 +3921,7 @@ if (window.DI_STATE) {
   function locIdx(id){var c=window.IDX_CATALOG||[];for(var g=0;g<c.length;g++){var it=c[g].items;for(var i=0;i<it.length;i++)if(it[i].id===id)return it[i];}return null;}
   function locDimLabel(id){var c=window.DIM_CATALOG||[];for(var i=0;i<c.length;i++)if(c[i].id===id)return c[i].label;return id;}
 
+  window.__rptChart=drawRealChart;
   // ── 사용자 차트(기본+빌더) 실데이터 재구현 ──────────────────────────────
   var DEF_DAILY=[
     {id:"uc_real_costs",name:"일자별 집행액(KRW) 추이",type:"line",dim:"date",idxs:["costs_krw"]},
@@ -4033,11 +4034,54 @@ if (window.DI_STATE) {
   var covLine="";
   function buildCov(c){ var pf=(c&&c.platforms)||[]; if(!pf.length)return ""; var mx=pf.map(function(p){return p.last_date;}).sort().slice(-1)[0]||"-"; var names=pf.map(function(p){return p.platform;}).join(" · "); return '<span class="rg-dot"></span>데이터 현황: <b>'+names+'</b> · 최신 '+mx+' <span class="rg-badge">집행액 KRW 환산</span>'; }
   function strip(page){ var g=GUIDE[page]; if(!g)return null; var el=document.createElement("div"); el.className="rpt-guide"; el.setAttribute("data-rg",page); el.innerHTML='<div class="rg-t">'+g.t+'</div><div class="rg-d">'+g.d+'</div><div class="rg-cov">'+(covLine||"데이터 현황 불러오는 중…")+'</div>'; return el; }
-  function mount(){ [["daily","page-daily"],["phase","page-phase"],["mm","page-mm"],["ai","page-ai"]].forEach(function(x){ var page=x[0], pageEl=document.getElementById(x[1]); if(!pageEl)return; if(pageEl.querySelector('[data-rg="'+page+'"]'))return; var host=pageEl.querySelector(".pwrap")||pageEl; var s=strip(page); if(!s)return; if(page==="ai"){ pageEl.insertBefore(s,pageEl.firstChild); } else { host.insertBefore(s,host.firstChild); } }); }
+  function mount(){ [["daily","page-daily"],["phase","page-phase"],["mm","page-mm"]].forEach(function(x){ var page=x[0], pageEl=document.getElementById(x[1]); if(!pageEl)return; if(pageEl.querySelector('[data-rg="'+page+'"]'))return; var host=pageEl.querySelector(".pwrap")||pageEl; var s=strip(page); if(!s)return; if(page==="ai"){ pageEl.insertBefore(s,pageEl.firstChild); } else { host.insertBefore(s,host.firstChild); } }); }
   function refreshCov(){ document.querySelectorAll(".rpt-guide .rg-cov").forEach(function(e){ if(covLine)e.innerHTML=covLine; }); }
   window.reportApi.coverage().then(function(c){ covLine=buildCov(c); mount(); refreshCov(); }).catch(function(){ mount(); });
   var _os=window.showPage; if(_os){ window.showPage=function(id){ try{_os(id);}catch(e){} setTimeout(mount,60); }; }
   if(document.readyState!=="loading")setTimeout(mount,400); else document.addEventListener("DOMContentLoaded",function(){setTimeout(mount,400);});
+})();
+</script>
+
+<!-- ===== AI 어시스턴트 재설계: 온보딩 + 동작하는 추천질문 + 우측 실데이터 결과 ===== -->
+<script>
+(function(){
+  if(!window.reportApi||!window.reportApi.enabled())return;
+  var INTENTS=[
+    {l:"매체별 집행액", dim:"media", met:"costs_krw", t:"bar"},
+    {l:"일자별 노출 추이", dim:"date", met:"impressions", t:"line"},
+    {l:"매체별 CTR", dim:"media", met:"ctr", t:"bar"},
+    {l:"캠페인별 집행액 TOP", dim:"campaign", met:"costs_krw", t:"bar"},
+    {l:"매체별 전환수", dim:"media", met:"conversions", t:"bar"},
+    {l:"브랜드별 집행액", dim:"brand_name", met:"costs_krw", t:"bar"}
+  ];
+  var DLBL={media:"매체",campaign:"캠페인",date:"일자",brand_name:"브랜드"};
+  var MLBL={costs_krw:"집행액",impressions:"노출",clicks:"클릭",ctr:"CTR",conversions:"전환"};
+  function bubble(role,html){ var c=document.getElementById("chat-msgs"); if(!c)return; var d=document.createElement("div"); d.className="cmsg "+role; d.innerHTML='<div class="cav">'+(role==="user"?"나":"AI")+'</div><div><div class="cbubble">'+html+'</div></div>'; c.appendChild(d); c.scrollTop=c.scrollHeight; }
+  function ensureResult(){ var main=document.querySelector("#page-ai .ai-main"); if(!main)return; if(document.getElementById("rpt-ai-result-card"))return; var card=document.createElement("div"); card.className="chart-card"; card.id="rpt-ai-result-card"; card.style.marginBottom="18px"; card.innerHTML='<div class="ccard-hd"><div><div class="ccard-t" id="rpt-ai-rt">질문 결과</div><div class="ccard-s" id="rpt-ai-rs">왼쪽 추천 질문을 누르면 여기에 실데이터 차트가 표시됩니다</div></div></div><div class="chart-wrap-sm"><canvas id="rpt-ai-result"></canvas></div>'; main.insertBefore(card, main.firstChild); }
+  function ask(it){ bubble("user", it.l); ensureResult();
+    var rt=document.getElementById("rpt-ai-rt"), rs=document.getElementById("rpt-ai-rs");
+    if(rt)rt.textContent=it.l; if(rs)rs.textContent="실데이터 · "+(DLBL[it.dim]||it.dim)+"별 "+(MLBL[it.met]||it.met);
+    if(window.__rptChart)window.__rptChart("rpt-ai-result",{dim:it.dim,idxs:[it.met],type:it.t});
+    bubble("ai","오른쪽 위 <b>"+it.l+"</b> 차트로 표시했습니다. (실데이터)");
+  }
+  function parse(text){
+    var dim=/매체|채널/.test(text)?"media":/캠페인/.test(text)?"campaign":/일자|날짜|추이|일별/.test(text)?"date":/브랜드/.test(text)?"brand_name":"media";
+    var met=/전환/.test(text)?"conversions":/클릭/.test(text)?"clicks":/노출/.test(text)?"impressions":/ctr|클릭률/i.test(text)?"ctr":/집행|비용|예산|금액|spend/i.test(text)?"costs_krw":null;
+    if(!met)return null; return {l:(DLBL[dim])+"별 "+(MLBL[met]),dim:dim,met:met,t:dim==="date"?"line":"bar"};
+  }
+  function handle(text){ text=(text||"").trim(); if(!text)return; var it=parse(text);
+    if(it){ ask(it); } else { bubble("user",text); bubble("ai","자연어 해석은 베타입니다. 이렇게 물어보세요: <b>매체별 집행액</b> · <b>일자별 노출 추이</b> · <b>캠페인별 집행액</b> · <b>매체별 전환수</b>"); }
+  }
+  function setup(){
+    var c=document.getElementById("chat-msgs"); if(!c)return; if(document.getElementById("rpt-ai-onboard"))return;
+    c.innerHTML='<div id="rpt-ai-onboard" class="cmsg ai"><div class="cav">AI</div><div><div class="cbubble">안녕하세요. 현재 <b>5개 매체(meta·dv360·google_ads·tiktok·sa360)</b> · 2024~2026 · <b>집행액·노출·클릭·CTR·전환</b> 데이터를 조회할 수 있습니다.<br><br>아래 <b>추천 질문</b>을 눌러보세요 — 결과는 <b>오른쪽 위 차트</b>로 표시됩니다. <span style="color:#B45309">(자연어는 베타·LLM 미연동 — 정형 질문에 가장 정확)</span></div></div></div>';
+    var box=document.getElementById("rp-sqbtns"); if(box){ box.innerHTML=""; INTENTS.forEach(function(it){ var b=document.createElement("button"); b.className="sqchip"; b.textContent=it.l; b.onclick=function(){ ask(it); }; box.appendChild(b); }); }
+    var inp=document.getElementById("chat-input"); if(inp){ inp.onkeydown=function(e){ if(e.key==="Enter"&&!e.shiftKey){ e.preventDefault(); handle(inp.value); inp.value=""; } }; }
+    var send=document.querySelector("#page-ai .csend"); if(send){ send.onclick=function(){ handle(inp?inp.value:""); if(inp)inp.value=""; }; }
+    ensureResult();
+  }
+  var _os=window.showPage; if(_os){ window.showPage=function(id){ try{_os(id);}catch(e){} if(id==="ai")setTimeout(setup,150); }; }
+  setTimeout(function(){ var pe=document.getElementById("page-ai"); if(pe&&pe.classList.contains("active"))setup(); },900);
 })();
 </script>
 </body>
