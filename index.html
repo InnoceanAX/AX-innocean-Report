@@ -3969,7 +3969,7 @@ if (window.DI_STATE) {
 
   // ── Media Mix Setup 캠페인 목록 실데이터 ───────────────────────────────
   var _origMM=window.initMMPage;
-  window.initMMPage=function(){ if(_origMM)try{_origMM();}catch(e){} fillRealCampaigns(); };
+  window.initMMPage=function(){ if(_origMM)try{_origMM();}catch(e){} var _t=document.querySelector("#camp-table tbody"); if(_t)_t.innerHTML='<tr><td colspan="5" style="padding:18px;color:#9CA3AF">데이터 불러오는 중…</td></tr>'; fillRealCampaigns(); };
   async function fillRealCampaigns(){
     var tb=document.querySelector("#camp-table tbody"); if(!tb)return;
     try{
@@ -4043,9 +4043,19 @@ if (window.DI_STATE) {
 </script>
 
 <!-- ===== AI 어시스턴트 재설계: 온보딩 + 동작하는 추천질문 + 우측 실데이터 결과 ===== -->
+<style id="rpt-ai-fit">
+#page-ai{height:calc(100vh - var(--hh) - var(--sh));max-height:calc(100vh - var(--hh) - var(--sh));overflow:hidden}
+.ai-wrap{min-height:0}
+.ai-sidebar,.sidebar-inner,.ai-main,.chat-msgs{min-height:0}
+</style>
 <script>
 (function(){
   if(!window.reportApi||!window.reportApi.enabled())return;
+  (function clr(){ try{
+    var t=document.querySelector('#camp-table tbody'); if(t)t.innerHTML='<tr><td colspan="5" style="padding:18px;color:#9CA3AF">데이터 불러오는 중…</td></tr>';
+    var k=document.querySelector('#page-ai .kpi-row'); if(k)k.innerHTML='';
+    var pc=document.querySelector('#phase-cmp-table tbody'); if(pc)pc.innerHTML='';
+  }catch(e){} })();
   var INTENTS=[
     {l:"매체별 집행액", dim:"media", met:"costs_krw", t:"bar"},
     {l:"일자별 노출 추이", dim:"date", met:"impressions", t:"line"},
@@ -4080,7 +4090,7 @@ if (window.DI_STATE) {
     var send=document.querySelector("#page-ai .csend"); if(send){ send.onclick=function(){ handle(inp?inp.value:""); if(inp)inp.value=""; }; }
     ensureResult();
   }
-  var _os=window.showPage; if(_os){ window.showPage=function(id){ try{_os(id);}catch(e){} if(id==="ai")setTimeout(setup,150); }; }
+  var _os=window.showPage; if(_os){ window.showPage=function(id){ try{_os(id);}catch(e){} if(id==="ai")setup(); }; }
   setTimeout(function(){ var pe=document.getElementById("page-ai"); if(pe&&pe.classList.contains("active"))setup(); },900);
 })();
 </script>
