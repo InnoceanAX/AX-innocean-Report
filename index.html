@@ -4094,5 +4094,128 @@ if (window.DI_STATE) {
   setTimeout(function(){ var pe=document.getElementById("page-ai"); if(pe&&pe.classList.contains("active"))setup(); },900);
 })();
 </script>
+
+<!-- ===== 미디어믹스 설정 실연결: 5플랫폼 + 실캠페인 로드 + 저장(BQ) ===== -->
+<script>
+(function(){
+  if(!window.reportApi||!window.reportApi.enabled())return;
+  var PLATS=[{k:"meta",l:"Meta"},{k:"dv360",l:"DV360"},{k:"google_ads",l:"Google Ads"},{k:"tiktok",l:"TikTok"},{k:"sa360",l:"SA360"}];
+  var PEND=[{k:"naver",l:"네이버"},{k:"kakao",l:"카카오"}];
+  var KPIS=[{k:"impressions",l:"노출수",add:1},{k:"clicks",l:"클릭수",add:1},{k:"ctr",l:"CTR(%)",add:0},{k:"cpm",l:"CPM(원)",add:0},{k:"cpc",l:"CPC(원)",add:0}];
+  var CAMP=null, CAMPS={};
+  function api(){return window.reportApi.base();}
+  function enc(s){return encodeURIComponent(s);}
+  async function jget(p){try{var r=await fetch(api()+p);return await r.json();}catch(e){return {};}}
+  async function jpost(p,b){var r=await fetch(api()+p,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b)});return r.json();}
+  function $(id){return document.getElementById(id);}
+  function num(v){v=parseFloat(v);return isNaN(v)?0:v;}
+  function days(a,b){try{return Math.max(1,Math.round((new Date(b+"T00:00:00")-new Date(a+"T00:00:00"))/86400000)+1);}catch(e){return 1;}}
+  function secByTitle(t){var ss=document.querySelectorAll("#mm-detail-view .form-section");for(var i=0;i<ss.length;i++){var h=ss[i].querySelector(".form-sec-t");if(h&&h.textContent.indexOf(t)>=0)return ss[i];}return null;}
+  function tbodyOf(t){var s=secByTitle(t);return s?s.querySelector("tbody"):null;}
+
+  function pend(cols){return PEND.map(function(p){return '<tr style="opacity:.5"><td>'+p.l+'</td><td colspan="'+cols+'" style="color:#9CA3AF;font-size:11px">데이터 대기 (수집 예정)</td></tr>';}).join("");}
+
+  function rebuildBudget(){
+    var tb=tbodyOf("예산 배분"); if(!tb)return;
+    tb.innerHTML=PLATS.map(function(p){return '<tr><td>'+p.l+'</td><td><input class="finp" id="rbud-'+p.k+'" type="number" min="0" placeholder="0" style="width:160px" oninput="window.__mmBudShare()"></td><td id="rshare-'+p.k+'">-</td></tr>';}).join("")
+      +pend(2)+'<tr class="total-row"><td>합계</td><td id="rbud-total">-</td><td>100%</td></tr>';
+  }
+  window.__mmBudShare=function(){var tot=0;PLATS.forEach(function(p){tot+=num($("rbud-"+p.k).value);});PLATS.forEach(function(p){var v=num($("rbud-"+p.k).value);var e=$("rshare-"+p.k);if(e)e.textContent=tot?((v/tot*100).toFixed(1)+"%"):"-";});var t=$("rbud-total");if(t)t.textContent="₩"+tot.toLocaleString();};
+
+  function rebuildKpi(){
+    var tb=tbodyOf("KPI 목표"); if(!tb)return;
+    tb.innerHTML=PLATS.map(function(p){return '<tr><td style="text-align:left;padding-left:8px">'+p.l+'</td>'+
+      KPIS.map(function(m){return '<td><input class="finp" id="rkpi-'+p.k+'-'+m.k+'" type="number" min="0" step="'+(m.add?1:0.01)+'" placeholder="0" style="width:90px"></td>';}).join("")+'<td></td></tr>';}).join("")
+      +PEND.map(function(p){return '<tr style="opacity:.5"><td style="text-align:left;padding-left:8px">'+p.l+'</td><td colspan="6" style="color:#9CA3AF;font-size:11px">데이터 대기</td></tr>';}).join("");
+  }
+  function rebuildGross(){
+    var tb=tbodyOf("Gross"); if(!tb)return;
+    tb.innerHTML=PLATS.map(function(p){return '<tr><td>'+p.l+'</td><td><input class="finp" id="rfee-'+p.k+'" type="number" value="15" step="0.1" style="width:80px"> %</td></tr>';}).join("")+pend(1);
+  }
+  function rebuildPhases(list){
+    var el=$("phase-list"); if(!el)return;
+    if(!list||!list.length){
+      var c=CAMPS[CAMP]||{}; var s=c.first_date||"2026-01-01", e=c.last_date||"2026-06-30";
+      var a=new Date(s+"T00:00:00"), b=new Date(e+"T00:00:00"); var span=days(s,e); var seg=span/4; var nm=["사전 준비","런칭","성수기","마무리"]; list=[];
+      for(var i=0;i<4;i++){var ps=new Date(a.getTime()+Math.floor(seg*i)*86400000);var pe=(i===3)?b:new Date(a.getTime()+(Math.floor(seg*(i+1))-1)*86400000);list.push({phase_name:nm[i],period_start:ps.toISOString().slice(0,10),period_end:pe.toISOString().slice(0,10)});}
+    }
+    el.innerHTML=list.map(function(p,i){return '<div class="phase-row" data-i="'+i+'" style="display:flex;gap:8px;align-items:center;margin-bottom:8px">'+
+      '<input class="form-inp rph-n" value="'+(p.phase_name||"")+'" placeholder="Phase명" style="width:140px">'+
+      '<input class="form-inp rph-s" type="date" value="'+(p.period_start||"")+'" style="width:150px">'+
+      '<span>~</span><input class="form-inp rph-e" type="date" value="'+(p.period_end||"")+'" style="width:150px">'+
+      '<button class="dbtn" onclick="this.parentNode.remove()">×</button></div>';}).join("");
+  }
+  window.addPhase=function(){var el=$("phase-list");if(!el)return;var d=document.createElement("div");d.className="phase-row";d.style.cssText="display:flex;gap:8px;align-items:center;margin-bottom:8px";d.innerHTML='<input class="form-inp rph-n" placeholder="Phase명" style="width:140px"><input class="form-inp rph-s" type="date" style="width:150px"><span>~</span><input class="form-inp rph-e" type="date" style="width:150px"><button class="dbtn" onclick="this.parentNode.remove()">×</button>';el.appendChild(d);};
+
+  function collectPhases(){var out=[];document.querySelectorAll("#phase-list .phase-row").forEach(function(r,i){var n=r.querySelector(".rph-n").value.trim(),s=r.querySelector(".rph-s").value,e=r.querySelector(".rph-e").value;if(n&&s&&e)out.push({phase_name:n,period_start:s,period_end:e,sort_order:i,days:days(s,e)});});return out;}
+
+  function prefillTargets(rows){
+    // 캠페인 합계로 역산: phase별 합 -> 플랫폼별 합 (additive) / 평균(ratio)
+    var agg={}; (rows||[]).forEach(function(r){var key=r.platform+"|"+r.metric;agg[key]=agg[key]||{sum:0,vals:[]};agg[key].sum+=r.target_value;agg[key].vals.push(r.target_value);});
+    PLATS.forEach(function(p){
+      var b=agg[p.k+"|costs_krw"]; if(b&&$("rbud-"+p.k))$("rbud-"+p.k).value=Math.round(b.sum);
+      KPIS.forEach(function(m){var a=agg[p.k+"|"+m.k];var inp=$("rkpi-"+p.k+"-"+m.k);if(a&&inp){inp.value=m.add?Math.round(a.sum):(m.k==="ctr"?(a.vals[0]*100).toFixed(2):Math.round(a.vals[0]));}});
+    });
+    if($("rbud-meta"))window.__mmBudShare();
+  }
+  function prefillFees(rows){(rows||[]).forEach(function(r){var e=$("rfee-"+r.platform);if(e)e.value=(r.fee_rate*100).toFixed(1);});}
+
+  function collectTargets(phases){
+    var total=phases.reduce(function(s,p){return s+p.days;},0)||1; var rows=[];
+    PLATS.forEach(function(p){
+      var bud=num($("rbud-"+p.k).value); var kpi={}; KPIS.forEach(function(m){kpi[m.k]=num($("rkpi-"+p.k+"-"+m.k).value);});
+      phases.forEach(function(ph){var sh=ph.days/total;
+        function push(metric,val,add){if(val>0)rows.push({platform:p.k,phase_name:ph.phase_name,metric:metric,target_value:add?val*sh:val});}
+        push("costs_krw",bud,true); push("impressions",kpi.impressions,true); push("clicks",kpi.clicks,true);
+        push("ctr",kpi.ctr/100,false); push("cpm",kpi.cpm,false); push("cpc",kpi.cpc,false);
+      });
+    });
+    return rows;
+  }
+  function collectFees(){return PLATS.map(function(p){return {platform:p.k,fee_rate:num($("rfee-"+p.k).value)/100};});}
+
+  window.openMMReal=async function(campaignName){
+    CAMP=campaignName;
+    $("mm-list-view").style.display="none"; $("mm-detail-view").style.display="";
+    if($("mm-name"))$("mm-name").value=campaignName||"";
+    var c=CAMPS[campaignName]||{};
+    if($("mm-adv"))$("mm-adv").value=c.brand||""; if($("mm-start")&&c.first_date)$("mm-start").value=c.first_date; if($("mm-end")&&c.last_date)$("mm-end").value=c.last_date;
+    var tt=$("mm-detail-title"); if(tt)tt.textContent=(campaignName||"새 캠페인")+" — 목표 설정";
+    rebuildBudget(); rebuildKpi(); rebuildGross();
+    var ph=await jget("/api/phases?campaign="+enc(campaignName)); rebuildPhases(ph.phases||[]);
+    prefillTargets((await jget("/api/targets?campaign="+enc(campaignName))).targets||[]);
+    prefillFees((await jget("/api/fees?campaign="+enc(campaignName))).fees||[]);
+  };
+
+  window.showMMDetail=function(a){ if(typeof a==="string"&&a){ window.openMMReal(a); } else { CAMP=null; if($("mm-list-view"))$("mm-list-view").style.display="none"; if($("mm-detail-view"))$("mm-detail-view").style.display=""; if($("mm-name"))$("mm-name").value=""; if($("mm-detail-title"))$("mm-detail-title").textContent="새 캠페인 — 목표 설정"; rebuildBudget(); rebuildKpi(); rebuildGross(); rebuildPhases([]); } };
+  window.saveMMDetail=async function(){
+    if(!CAMP)CAMP=$("mm-name")?$("mm-name").value:null; if(!CAMP){if(window.showToast)showToast("캠페인을 선택하세요");return;}
+    var phases=collectPhases(); if(!phases.length){if(window.showToast)showToast("Phase를 1개 이상 정의하세요");return;}
+    try{
+      await jpost("/api/phases?campaign="+enc(CAMP), phases.map(function(p){return {phase_name:p.phase_name,period_start:p.period_start,period_end:p.period_end,sort_order:p.sort_order};}));
+      var tg=await jpost("/api/targets?campaign="+enc(CAMP), collectTargets(phases));
+      await jpost("/api/fees?campaign="+enc(CAMP), collectFees());
+      if(window.showToast)showToast("저장 완료 ("+(tg.inserted||0)+"개 목표) — Daily·Phase 달성률에 반영");
+      if(window.hideMMDetail)hideMMDetail();
+    }catch(e){ if(window.showToast)showToast("저장 오류: "+e.message); }
+  };
+
+  // 캠페인 목록 캐시 + 행 클릭을 실데이터 상세로
+  async function loadCamps(){
+    var d=await jget("/api/campaigns?limit=80"); (d.campaigns||[]).forEach(function(c){CAMPS[c.campaign_name]=c;});
+    var tb=document.querySelector("#camp-table tbody"); if(!tb)return;
+    var rows=(d.campaigns||[]);
+    tb.innerHTML=rows.map(function(c){var per=(c.first_date||"")+" ~ "+(c.last_date||"");
+      return '<tr class="camp-row"><td><strong>'+c.campaign_name+'</strong></td><td>'+(c.brand||"-")+'</td><td>'+per+'</td>'+
+      '<td><span class="camp-status active">데이터 있음</span></td>'+
+      '<td><button class="dbtn pri" data-camp="'+c.campaign_name.replace(/"/g,"&quot;")+'" onclick="window.openMMReal(this.dataset.camp)">목표 설정</button></td></tr>';}).join("");
+  }
+  var _mm=window.initMMPage;
+  window.initMMPage=function(){ if(_mm)try{_mm();}catch(e){} setTimeout(loadCamps,600); };
+  // 진입 대비
+  setTimeout(function(){var pe=$("page-mm");if(pe)loadCamps();},1200);
+})();
+</script>
+
 </body>
 </html>

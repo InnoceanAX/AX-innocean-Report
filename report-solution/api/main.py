@@ -121,119 +121,180 @@ def query(req: QueryReq):
 
 
 TARGETS = f"{MART}.media_plan_targets"
-# *_index(달성률) -> 실적 base 지표 매핑
-INDEX_BASE = {
-    "impressions_index": "impressions", "clicks_index": "clicks",
-    "conversions_index": "conversions", "costs_index": "costs_krw",
-}
+PHASES = f"{MART}.phase_definitions"
+FEES = f"{MART}.media_plan_fees"
+INDEX_BASE = {"impressions_index": "impressions", "clicks_index": "clicks", "conversions_index": "conversions", "costs_index": "costs_krw"}
+BASE_SET = {"impressions", "clicks", "conversions", "costs_krw", "ctr", "cpm", "cpc"}
+
+
+def _q(sql, params=None):
+    job = client.query(sql, job_config=bigquery.QueryJobConfig(query_parameters=params or []))
+    return [dict(r) for r in job.result()]
+
+
+def _actual_expr(base, pfx=""):
+    c, i, k = pfx + "clicks", pfx + "impressions", pfx + "costs_krw"
+    if base == "ctr":
+        return f"SAFE_DIVIDE(SUM({c}), SUM({i}))"
+    if base == "cpm":
+        return f"SAFE_DIVIDE(SUM({k}), SUM({i})) * 1000"
+    if base == "cpc":
+        return f"SAFE_DIVIDE(SUM({k}), SUM({c}))"
+    return f"SUM({pfx}{base})"
+
+
+# ---- 실제 캠페인 목록 (MM Setup 드롭다운) ----
+@app.get("/api/campaigns")
+def campaigns(limit: int = 60):
+    rows = _q(
+        f"SELECT campaign_name, ANY_VALUE(brand_name) brand, ANY_VALUE(country) country, "
+        f"MIN(date) first_date, MAX(date) last_date, SUM(costs_krw) costs_krw, "
+        f"ARRAY_AGG(DISTINCT platform IGNORE NULLS) platforms "
+        f"FROM `{PERF}` WHERE campaign_name IS NOT NULL "
+        f"GROUP BY campaign_name ORDER BY costs_krw DESC LIMIT {min(int(limit), 500)}"
+    )
+    return {"campaigns": rows}
+
+
+# ---- Phase 정의 ----
+class PhaseRow(BaseModel):
+    phase_name: str
+    period_start: str
+    period_end: str
+    sort_order: Optional[int] = 0
+
+
+@app.get("/api/phases")
+def phases_get(campaign: str):
+    return {"phases": _q(
+        f"SELECT phase_name, period_start, period_end, sort_order FROM `{PHASES}` WHERE campaign_name=@c ORDER BY sort_order",
+        [bigquery.ScalarQueryParameter("c", "STRING", campaign)])}
+
+
+@app.post("/api/phases")
+def phases_save(campaign: str, rows: list[PhaseRow]):
+    cp = [bigquery.ScalarQueryParameter("c", "STRING", campaign)]
+    client.query(f"DELETE FROM `{PHASES}` WHERE campaign_name=@c", job_config=bigquery.QueryJobConfig(query_parameters=cp)).result()
+    for i, r in enumerate(rows):
+        client.query(
+            f"INSERT INTO `{PHASES}` (campaign_name,phase_name,period_start,period_end,sort_order,_updated_at) "
+            f"VALUES (@c,@n,@s,@e,@o,CURRENT_TIMESTAMP())",
+            job_config=bigquery.QueryJobConfig(query_parameters=[
+                bigquery.ScalarQueryParameter("c", "STRING", campaign),
+                bigquery.ScalarQueryParameter("n", "STRING", r.phase_name),
+                bigquery.ScalarQueryParameter("s", "DATE", r.period_start),
+                bigquery.ScalarQueryParameter("e", "DATE", r.period_end),
+                bigquery.ScalarQueryParameter("o", "INT64", r.sort_order if r.sort_order is not None else i)])).result()
+    return {"saved": len(rows)}
+
+
+# ---- Gross 수수료 ----
+class FeeRow(BaseModel):
+    platform: str
+    fee_rate: float
+
+
+@app.get("/api/fees")
+def fees_get(campaign: str):
+    return {"fees": _q(f"SELECT platform, fee_rate FROM `{FEES}` WHERE campaign_name=@c",
+                       [bigquery.ScalarQueryParameter("c", "STRING", campaign)])}
+
+
+@app.post("/api/fees")
+def fees_save(campaign: str, rows: list[FeeRow]):
+    cp = [bigquery.ScalarQueryParameter("c", "STRING", campaign)]
+    client.query(f"DELETE FROM `{FEES}` WHERE campaign_name=@c", job_config=bigquery.QueryJobConfig(query_parameters=cp)).result()
+    for r in rows:
+        client.query(
+            f"INSERT INTO `{FEES}` (campaign_name,platform,fee_rate,_updated_at) VALUES (@c,@p,@f,CURRENT_TIMESTAMP())",
+            job_config=bigquery.QueryJobConfig(query_parameters=[
+                bigquery.ScalarQueryParameter("c", "STRING", campaign),
+                bigquery.ScalarQueryParameter("p", "STRING", r.platform),
+                bigquery.ScalarQueryParameter("f", "FLOAT64", r.fee_rate)])).result()
+    return {"saved": len(rows)}
+
+
+# ---- 목표(Targets): campaign x platform x phase x metric ----
+class TargetRow(BaseModel):
+    platform: str
+    phase_name: Optional[str] = None
+    metric: str
+    target_value: float
 
 
 @app.get("/api/targets")
-def targets_list():
-    try:
-        rows = client.query(f"SELECT * FROM `{TARGETS}` ORDER BY _updated_at DESC").result()
-        return {"targets": [dict(r) for r in rows]}
-    except Exception as e:
-        return {"targets": [], "error": str(e)[:200]}
-
-
-class TargetRow(BaseModel):
-    metric: str
-    target_value: float
-    period_start: str
-    period_end: str
-    platform: Optional[str] = None
-    brand_name: Optional[str] = None
-    country: Optional[str] = None
-    campaign_id: Optional[str] = None
-    note: Optional[str] = None
+def targets_get(campaign: Optional[str] = None):
+    w = "WHERE campaign_name=@c" if campaign else ""
+    pr = [bigquery.ScalarQueryParameter("c", "STRING", campaign)] if campaign else []
+    return {"targets": _q(f"SELECT campaign_name,platform,phase_name,metric,target_value FROM `{TARGETS}` {w} ORDER BY _updated_at DESC", pr)}
 
 
 @app.post("/api/targets")
-def targets_save(rows: list[TargetRow]):
-    """목표 입력(append). media_plan_targets 에만 쓰기권한 보유."""
-    if not rows:
-        raise HTTPException(400, "no rows")
-    payload = []
-    for r in rows:
-        d = r.model_dump()
-        d["_updated_at"] = None  # 서버시각으로 채움
-        payload.append(d)
-    sql = f"""INSERT INTO `{TARGETS}`
-        (metric, target_value, period_start, period_end, platform, brand_name, country, campaign_id, note, _updated_at)
-        VALUES (@metric,@target_value,@period_start,@period_end,@platform,@brand_name,@country,@campaign_id,@note,CURRENT_TIMESTAMP())"""
+def targets_save(campaign: str, rows: list[TargetRow]):
+    cp = [bigquery.ScalarQueryParameter("c", "STRING", campaign)]
+    client.query(f"DELETE FROM `{TARGETS}` WHERE campaign_name=@c", job_config=bigquery.QueryJobConfig(query_parameters=cp)).result()
     n = 0
     for r in rows:
-        params = [
-            bigquery.ScalarQueryParameter("metric", "STRING", r.metric),
-            bigquery.ScalarQueryParameter("target_value", "FLOAT64", r.target_value),
-            bigquery.ScalarQueryParameter("period_start", "DATE", r.period_start),
-            bigquery.ScalarQueryParameter("period_end", "DATE", r.period_end),
-            bigquery.ScalarQueryParameter("platform", "STRING", r.platform),
-            bigquery.ScalarQueryParameter("brand_name", "STRING", r.brand_name),
-            bigquery.ScalarQueryParameter("country", "STRING", r.country),
-            bigquery.ScalarQueryParameter("campaign_id", "STRING", r.campaign_id),
-            bigquery.ScalarQueryParameter("note", "STRING", r.note),
-        ]
-        client.query(sql, job_config=bigquery.QueryJobConfig(query_parameters=params)).result()
+        if r.target_value is None:
+            continue
+        client.query(
+            f"INSERT INTO `{TARGETS}` (campaign_name,platform,phase_name,metric,target_value,_updated_at) "
+            f"VALUES (@c,@p,@ph,@m,@v,CURRENT_TIMESTAMP())",
+            job_config=bigquery.QueryJobConfig(query_parameters=[
+                bigquery.ScalarQueryParameter("c", "STRING", campaign),
+                bigquery.ScalarQueryParameter("p", "STRING", r.platform),
+                bigquery.ScalarQueryParameter("ph", "STRING", r.phase_name),
+                bigquery.ScalarQueryParameter("m", "STRING", r.metric),
+                bigquery.ScalarQueryParameter("v", "FLOAT64", r.target_value)])).result()
         n += 1
     return {"inserted": n}
 
 
+# ---- 달성률: by=platform(일별) | phase(Phase 분석) ----
 class AchieveReq(BaseModel):
-    metric: str                      # *_index (예: impressions_index)
-    groupby: Optional[str] = None    # 선택 디멘션 (platform/brand_name/...)
-    filters: dict = {}
+    metric: str
+    by: str = "platform"
+    campaign: Optional[str] = None
     date_from: Optional[str] = None
     date_to: Optional[str] = None
 
 
 @app.post("/api/achievement")
 def achievement(req: AchieveReq):
-    """달성률 = 실적(actual) / 목표(target) * 100. 목표 없으면 target=None."""
-    base = INDEX_BASE.get(req.metric)
-    if not base or base not in ADDITIVE:
-        raise HTTPException(400, f"unsupported index metric: {req.metric}")
-    gb = DIMS.get(req.groupby) if req.groupby else None
-    # 실적
-    aw, ap = ["date IS NOT NULL"], []
-    for col, val in (req.filters or {}).items():
-        if col in DIMS:
-            aw.append(f"{DIMS[col]} = @f_{col}"); ap.append(bigquery.ScalarQueryParameter(f"f_{col}", "STRING", str(val)))
-    if req.date_from:
-        aw.append("date >= @df"); ap.append(bigquery.ScalarQueryParameter("df", "DATE", req.date_from))
-    if req.date_to:
-        aw.append("date <= @dt"); ap.append(bigquery.ScalarQueryParameter("dt", "DATE", req.date_to))
-    asel = (f"{gb} AS k, " if gb else "") + f"SUM({base}) AS actual"
-    asql = f"SELECT {asel} FROM `{PERF}` WHERE {' AND '.join(aw)}" + (f" GROUP BY 1" if gb else "")
-    actual = {(r.get("k") if gb else "_"): r["actual"] for r in [dict(x) for x in client.query(asql, job_config=bigquery.QueryJobConfig(query_parameters=ap)).result()]}
-    # 목표 (기간 겹침 + 동일 scope). 목표테이블에 실제 존재하는 컬럼으로만 그룹화.
-    TARGET_DIMS = {"platform", "brand_name", "country"}   # campaign 은 name/id 불일치로 그룹 제외
-    tgb = req.groupby if req.groupby in TARGET_DIMS else None
-    tw, tp = ["metric=@m"], [bigquery.ScalarQueryParameter("m", "STRING", base)]
-    for col, val in (req.filters or {}).items():
-        if col in ("platform", "brand_name", "country", "campaign_id"):
-            tw.append(f"{col}=@t_{col}"); tp.append(bigquery.ScalarQueryParameter(f"t_{col}", "STRING", str(val)))
-    if req.date_to:
-        tw.append("period_start <= @dt2"); tp.append(bigquery.ScalarQueryParameter("dt2", "DATE", req.date_to))
-    if req.date_from:
-        tw.append("period_end >= @df2"); tp.append(bigquery.ScalarQueryParameter("df2", "DATE", req.date_from))
-    tsel = (f"{tgb} AS k, " if tgb else "") + "SUM(target_value) AS target"
-    tsql = f"SELECT {tsel} FROM `{TARGETS}` WHERE {' AND '.join(tw)}" + (" GROUP BY 1" if tgb else "")
-    trows = [dict(x) for x in client.query(tsql, job_config=bigquery.QueryJobConfig(query_parameters=tp)).result()]
-    if tgb:
-        target = {r.get("k"): r["target"] for r in trows}
+    base = INDEX_BASE.get(req.metric) or (req.metric if req.metric in BASE_SET else None)
+    if not base:
+        raise HTTPException(400, f"unsupported metric: {req.metric}")
+    if req.by == "phase":
+        if not req.campaign:
+            raise HTTPException(400, "campaign required for by=phase")
+        cp = [bigquery.ScalarQueryParameter("c", "STRING", req.campaign)]
+        actual = {r["k"]: r["actual"] for r in _q(
+            f"SELECT ph.phase_name k, {_actual_expr(base, 'p.')} actual "
+            f"FROM `{PHASES}` ph JOIN `{PERF}` p "
+            f"ON p.campaign_name=ph.campaign_name AND p.date BETWEEN ph.period_start AND ph.period_end "
+            f"WHERE ph.campaign_name=@c GROUP BY 1", cp)}
+        target = {r["k"]: r["target"] for r in _q(
+            f"SELECT phase_name k, SUM(target_value) target FROM `{TARGETS}` "
+            f"WHERE campaign_name=@c AND metric=@m AND phase_name IS NOT NULL GROUP BY 1",
+            cp + [bigquery.ScalarQueryParameter("m", "STRING", base)])}
+        keys = [r["phase_name"] for r in _q(f"SELECT phase_name FROM `{PHASES}` WHERE campaign_name=@c ORDER BY sort_order", cp)] or sorted(set(actual) | set(target))
     else:
-        # 그룹 불가(또는 무그룹): 전체 목표 합을 단일 키로
-        total_t = trows[0]["target"] if trows else None
-        target = {"_": total_t} if not gb else {}  # gb 있는데 목표 그룹불가 → 그룹별 목표 None
-    keys = set(actual) | set(target)
-    out = []
-    for k in keys:
-        a, t = actual.get(k), target.get(k)
-        out.append({"key": k, "actual": a, "target": t,
-                    "index": (round(a / t * 100, 1) if (a is not None and t) else None)})
-    return {"metric": req.metric, "base": base, "groupby": req.groupby, "rows": out}
+        aw, ap = ["date IS NOT NULL"], []
+        if req.campaign:
+            aw.append("campaign_name=@c"); ap.append(bigquery.ScalarQueryParameter("c", "STRING", req.campaign))
+        if req.date_from:
+            aw.append("date>=@df"); ap.append(bigquery.ScalarQueryParameter("df", "DATE", req.date_from))
+        if req.date_to:
+            aw.append("date<=@dt"); ap.append(bigquery.ScalarQueryParameter("dt", "DATE", req.date_to))
+        actual = {r["k"]: r["actual"] for r in _q(f"SELECT platform k, {_actual_expr(base)} actual FROM `{PERF}` WHERE {' AND '.join(aw)} GROUP BY 1", ap)}
+        tw, tp = ["metric=@m"], [bigquery.ScalarQueryParameter("m", "STRING", base)]
+        if req.campaign:
+            tw.append("campaign_name=@c"); tp.append(bigquery.ScalarQueryParameter("c", "STRING", req.campaign))
+        target = {r["k"]: r["target"] for r in _q(f"SELECT platform k, SUM(target_value) target FROM `{TARGETS}` WHERE {' AND '.join(tw)} GROUP BY 1", tp)}
+        keys = sorted(set(actual) | set(target))
+    out = [{"key": k, "actual": actual.get(k), "target": target.get(k),
+            "index": (round(actual[k] / target[k] * 100, 1) if actual.get(k) is not None and target.get(k) else None)} for k in keys]
+    return {"metric": req.metric, "base": base, "by": req.by, "rows": out}
 
 
 @app.get("/")
