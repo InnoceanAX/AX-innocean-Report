@@ -1054,7 +1054,7 @@ body.dark .bm-item:hover{background:var(--bg-soft2)}
     <!-- Media Breakdown Table -->
     <div class="sec-hd">
       <span class="sec-t">매체별 성과 분석</span>
-      <button class="dbtn pri" onclick="showToast('Excel 파일을 다운로드합니다.')">Excel 다운로드</button>
+      <button class="dbtn pri" onclick="window.__exportDailyCsv&&window.__exportDailyCsv()">Excel 다운로드</button>
     </div>
     <div class="di-panel" id="daily-tbl-di"></div>
     <div class="table-tools" data-tools-for="daily-mtable"></div>
@@ -3644,7 +3644,7 @@ if (window.DI_STATE) {
     if(v==null||isNaN(v))return '<span style="color:#9CA3AF">—</span>';
     var u=unit(idxId);
     if(u==="%")return (v*100).toFixed(2)+"%";
-    if(u==="원")return "₩"+Math.round(v).toLocaleString();
+    if(u==="원")return ((window.__DAILYF&&window.__DAILYF.cur==="USD")?"$":"₩")+Math.round(v).toLocaleString();
     if(Math.abs(v)>=1e8)return (v/1e6).toFixed(1)+"M"; if(Math.abs(v)>=1e6)return (v/1e6).toFixed(2)+"M"; if(Math.abs(v)>=1e3)return (v/1e3).toFixed(1)+"K";
     return Math.round(v).toLocaleString();
   }
@@ -3658,6 +3658,7 @@ if (window.DI_STATE) {
     var r=await window.reportApi.query({dims:dims,metrics:mets,filters:f,date_from:RPT.dateFrom,date_to:RPT.dateTo,limit:2000});
     var rows=r.rows||[];
     if(cur==="USD")rows.forEach(function(row){ if("costs_usd" in row)row.costs_krw=row.costs_usd; });
+    if(F.gross&&F.gross.on){var g=1+(F.gross.rate||0)/100;rows.forEach(function(row){ if("costs_krw" in row&&row.costs_krw!=null)row.costs_krw*=g; });}
     return rows;
   }
   function unsNote(uns){ return uns.length?('<div style="margin-top:6px;font-size:11px;color:#B45309">· 수집예정(미지원 지표): '+uns.join(", ")+'</div>'):''; }
@@ -4274,6 +4275,84 @@ if (window.DI_STATE) {
     document.querySelectorAll("input[name=daily-cur]").forEach(function(r){r.onchange=window.applyDailyFilter;});
   }
   var t=0;(function w(){ if(window.__RPT||t>40){ setTimeout(wire,300); } else { t++; setTimeout(w,150); } })();
+})();
+</script>
+
+
+<!-- ===== 이상치 자동 탐지 (실데이터 임계 기반) — Daily 알림 ===== -->
+<script>
+(function(){
+  if(!window.reportApi||!window.reportApi.enabled())return;
+  async function q(body){var r=await fetch(window.reportApi.base()+"/api/query",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});return (await r.json()).rows||[];}
+  function pct(a,b){return b?((a-b)/b*100):0;}
+  async function detect(){
+    var to=(window.__RPT&&window.__RPT.to)||"2026-06-10"; var d=new Date(to+"T00:00:00"); d.setDate(d.getDate()-21); var from=d.toISOString().slice(0,10);
+    var camp=(window.__DAILYF&&window.__DAILYF.camp)||""; var f={}; if(camp)f.campaign_name=camp;
+    var rows=await q({dims:["date","platform"],metrics:["ctr","cpm","clicks","impressions"],filters:f,date_from:from,date_to:to,limit:6000});
+    var byp={}; rows.forEach(function(r){ if(!r.date||!r.platform)return; (byp[r.platform]=byp[r.platform]||[]).push(r); });
+    var alerts=[];
+    Object.keys(byp).forEach(function(pl){
+      var arr=byp[pl].sort(function(a,b){return a.date<b.date?-1:1;}); if(arr.length<4)return;
+      var last=arr[arr.length-1]; var prev=arr.slice(-8,-1);
+      function avg(k){var v=prev.map(function(x){return x[k];}).filter(function(x){return x!=null;});return v.length?v.reduce(function(s,x){return s+x;},0)/v.length:null;}
+      [["ctr","CTR",1],["cpm","CPM",0]].forEach(function(m){
+        var pa=avg(m[0]); if(pa==null||last[m[0]]==null||!pa)return; var ch=pct(last[m[0]],pa);
+        if(Math.abs(ch)>=20)alerts.push({pl:pl,metric:m[1],ch:ch,bad:(m[0]==="ctr"?ch<0:ch>0)});
+      });
+    });
+    alerts.sort(function(a,b){return Math.abs(b.ch)-Math.abs(a.ch);});
+    return {alerts:alerts,date:to};
+  }
+  function render(res){
+    var sec=document.querySelector("#page-daily .alert-section"); if(!sec)return; var hd=sec.querySelector(".alert-hd"); if(!hd)return;
+    sec.querySelectorAll(".alert-item").forEach(function(e){e.remove();});
+    var items;
+    if(!res.alerts.length){ items='<div class="alert-item"><span class="alert-tag ai-tag">✦ 정상</span><span class="alert-msg">최근일('+res.date+') 기준 전주평균 대비 임계(±20%) 초과 이상치 없음 — 실데이터</span></div>'; }
+    else { items=res.alerts.slice(0,6).map(function(a){ var dir=a.ch>=0?"▲ +":"▼ "; var clr=a.bad?"#DC2626":"#16A34A";
+      return '<div class="alert-item"><span class="alert-tag '+(a.bad?"rule-tag":"ai-tag")+'">'+(a.bad?"⚠ 이상":"✦ 양호")+'</span>'+
+        '<span class="alert-msg"><b>'+a.pl+'</b> '+a.metric+' 최근일 전주평균 대비 <b style="color:'+clr+'">'+dir+Math.abs(a.ch).toFixed(0)+'%</b> · '+res.date+' 기준 (실데이터·임계 ±20%)</span></div>';
+    }).join(""); }
+    hd.insertAdjacentHTML("afterend", items);
+  }
+  window.renderAnomalies=function(){ detect().then(render).catch(function(){}); };
+  var _os=window.showPage; if(_os){window.showPage=function(id){try{_os(id);}catch(e){} if(id==="daily")setTimeout(window.renderAnomalies,500);};}
+  // applyDailyFilter 시에도 갱신
+  var _af=window.applyDailyFilter; if(_af){window.applyDailyFilter=function(){_af();setTimeout(window.renderAnomalies,600);};}
+  var t=0;(function w(){if(window.__RPT||t>40){setTimeout(window.renderAnomalies,800);}else{t++;setTimeout(w,150);}})();
+})();
+</script>
+
+
+<!-- ===== Excel(CSV) 실데이터 export + Net/Gross 연결 ===== -->
+<script>
+(function(){
+  if(!window.reportApi||!window.reportApi.enabled())return;
+  function $(id){return document.getElementById(id);}
+  window.__exportDailyCsv=function(){
+    var t=$("daily-mtable"); if(!t){if(window.showToast)showToast("표가 없습니다");return;}
+    var lines=[]; t.querySelectorAll("tr").forEach(function(tr){
+      var cells=[]; tr.querySelectorAll("th,td").forEach(function(c){ var v=(c.innerText||"").replace(/\s+/g," ").trim().replace(/"/g,'""'); cells.push('"'+v+'"'); });
+      if(cells.length)lines.push(cells.join(","));
+    });
+    if(!lines.length){if(window.showToast)showToast("내보낼 데이터가 없습니다");return;}
+    var bom="﻿"; var blob=new Blob([bom+lines.join("\r\n")],{type:"text/csv;charset=utf-8;"});
+    var camp=(window.__DAILYF&&window.__DAILYF.camp)||"전체";
+    var a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="일별리포트_"+camp.slice(0,20)+".csv"; document.body.appendChild(a); a.click(); a.remove();
+    if(window.showToast)showToast("CSV(Excel 호환) 다운로드 완료");
+  };
+  // Net/Gross 연결
+  function readGross(){
+    var g=document.querySelector("input[name=daily-ng]:checked"); var on=g&&g.value==="gross";
+    var rate=parseFloat(($("gross-rate")||{}).value)||0;
+    window.__DAILYF=window.__DAILYF||{}; window.__DAILYF.gross={on:on,rate:rate};
+  }
+  function reRender(){ readGross(); if(window.renderDailySum)window.renderDailySum(); if(window.renderDailyTbl)window.renderDailyTbl(); if(window.renderUserCharts)window.renderUserCharts("daily"); }
+  function wire(){
+    document.querySelectorAll("input[name=daily-ng]").forEach(function(r){ var o=r.onchange; r.onchange=function(e){ if(o)try{o.call(this,e);}catch(x){} reRender(); }; });
+    var pd=$("page-daily"); if(pd){ var ab=pd.querySelector(".gross-extra .abtn"); if(ab)ab.onclick=reRender; }
+    readGross();
+  }
+  var t=0;(function w(){ if(document.getElementById("page-daily")||t>40){ setTimeout(wire,700); } else { t++; setTimeout(w,150); } })();
 })();
 </script>
 
