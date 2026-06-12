@@ -3652,14 +3652,19 @@ if (window.DI_STATE) {
   function lbl(grid,msg){grid.innerHTML='<div style="grid-column:1/-1;padding:24px;color:#767676;font-size:13px;border:1px dashed var(--bdr)">'+msg+'</div>';}
 
   async function agg(dims,metrics){
-    var r=await window.reportApi.query({dims:dims,metrics:metrics,date_from:RPT.dateFrom,date_to:RPT.dateTo,limit:2000});
-    return r.rows||[];
+    var F=window.__DAILYF||{}; var f={}; if(F.camp)f.campaign_name=F.camp;
+    var cur=F.cur||"KRW";
+    var mets=metrics.map(function(m){return (cur==="USD"&&m==="costs_krw")?"costs_usd":m;});
+    var r=await window.reportApi.query({dims:dims,metrics:mets,filters:f,date_from:RPT.dateFrom,date_to:RPT.dateTo,limit:2000});
+    var rows=r.rows||[];
+    if(cur==="USD")rows.forEach(function(row){ if("costs_usd" in row)row.costs_krw=row.costs_usd; });
+    return rows;
   }
   function unsNote(uns){ return uns.length?('<div style="margin-top:6px;font-size:11px;color:#B45309">· 수집예정(미지원 지표): '+uns.join(", ")+'</div>'):''; }
 
   async function achieve(metric,groupbyApi){
     var r=await fetch(window.reportApi.base()+"/api/achievement",{method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({metric:metric,groupby:groupbyApi||null,date_from:RPT.dateFrom,date_to:RPT.dateTo})});
+      body:JSON.stringify({metric:metric,by:"platform",campaign:(window.__DAILYF&&window.__DAILYF.camp)||null,date_from:RPT.dateFrom,date_to:RPT.dateTo})});
     if(!r.ok)throw new Error(r.status); return r.json();
   }
   function rateColor(ix){ return ix==null?"#9CA3AF":(ix>=95?"#16A34A":(ix>=80?"#6B7280":"#DC2626")); }
@@ -3750,6 +3755,7 @@ if (window.DI_STATE) {
       RPT.dateFrom=d.toISOString().slice(0,10); }
     window.__RPT={from:RPT.dateFrom,to:RPT.dateTo,fullFrom:(c.date_range&&c.date_range.from)||null};
     RPT.ready=true;
+    window.__setDailyRange=function(f,t){ if(f)RPT.dateFrom=f; if(t)RPT.dateTo=t; };
     if(window.renderDailySum)window.renderDailySum();
     if(window.renderDailyTbl)window.renderDailyTbl();
   }).catch(function(){ RPT.ready=false; });
@@ -3828,28 +3834,45 @@ if (window.DI_STATE) {
     var camp=sel.value;
     var grid=document.getElementById("phase-kpi-grid"); if(grid)grid.innerHTML='<div style="padding:14px;color:#767676">실데이터 불러오는 중…</div>';
     try{
-      var daily=await q({dims:["date"],metrics:["costs_krw","impressions","clicks"],filters:{campaign_name:camp},date_from:(window.__RPT&&window.__RPT.fullFrom)||"2024-01-01",date_to:(window.__RPT&&window.__RPT.to)||"2026-06-30",limit:2000});
-      daily=daily.filter(function(r){return r.date;}).sort(function(a,b){return a.date<b.date?-1:1;});
-      if(!daily.length){ if(grid)grid.innerHTML='<div style="padding:14px;color:#767676">선택 캠페인 데이터 없음</div>'; return; }
-      var phases=splitPhases(daily[0].date,daily[daily.length-1].date);
-      // 버킷 집계
+      var base=window.reportApi.base();
+      var pj=await fetch(base+"/api/phases?campaign="+encodeURIComponent(camp)).then(function(r){return r.json();}).catch(function(){return {};});
+      var saved=(pj&&pj.phases)||[]; var phases;
+      if(saved.length){ phases=saved.map(function(p){return {name:p.phase_name,start:p.period_start,end:p.period_end};}); }
+      else {
+        var d0=await q({dims:["date"],metrics:["costs_krw"],filters:{campaign_name:camp},date_from:(window.__RPT&&window.__RPT.fullFrom)||"2024-01-01",date_to:(window.__RPT&&window.__RPT.to)||"2026-06-30",limit:3000});
+        d0=d0.filter(function(r){return r.date;}).sort(function(a,b){return a.date<b.date?-1:1;});
+        if(!d0.length){ if(grid)grid.innerHTML='<div style="padding:14px;color:#767676">선택 캠페인 데이터 없음</div>'; return; }
+        phases=splitPhases(d0[0].date,d0[d0.length-1].date);
+      }
+      var dd=await q({dims:["date"],metrics:["costs_krw","impressions","clicks"],filters:{campaign_name:camp},date_from:phases[0].start,date_to:phases[phases.length-1].end,limit:3000});
       phases.forEach(function(p){ p.costs=0;p.imp=0;p.clk=0;
-        daily.forEach(function(r){ if(r.date>=p.start&&r.date<=p.end){ p.costs+=r.costs_krw||0; p.imp+=r.impressions||0; p.clk+=r.clicks||0; } });
+        dd.forEach(function(r){ if(r.date>=p.start&&r.date<=p.end){ p.costs+=r.costs_krw||0; p.imp+=r.impressions||0; p.clk+=r.clicks||0; } });
         p.ctr=p.imp?p.clk/p.imp:0;
       });
-      // 타임라인 블록 날짜 갱신
+      var achv={};
+      if(saved.length){
+        var mets=[["costs_krw","costs"],["impressions","imp"],["clicks","clk"],["ctr","ctr"]];
+        var ress=await Promise.all(mets.map(function(m){ return fetch(base+"/api/achievement",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({metric:m[0],by:"phase",campaign:camp})}).then(function(r){return r.json();}).catch(function(){return {};}); }));
+        mets.forEach(function(m,mi){ (ress[mi].rows||[]).forEach(function(row){ achv[row.key]=achv[row.key]||{}; achv[row.key][m[1]]={target:row.target,index:row.index}; }); });
+      }
       phases.forEach(function(p,i){ var blk=document.getElementById("phase-blk-"+i); if(blk){ var dn=blk.querySelector(".ph-date"); if(dn)dn.textContent=p.start.slice(5)+" ~ "+p.end.slice(5); } });
-      // KPI 그리드 (실제 실적 per phase)
-      if(grid){ grid.innerHTML=phases.map(function(p){
+      if(grid){ grid.innerHTML=phases.map(function(p){ var a=achv[p.name]||{}; var rate=(a.costs&&a.costs.index!=null)?a.costs.index:null;
+        var rc=rate==null?"#9CA3AF":(rate>=90?"#16A34A":"#6B7280");
         return '<div class="ph-kpi-card"><div class="ph-kpi-lbl">'+p.name+' <span style="font-size:10px;color:#9CA3AF">'+p.start.slice(5)+"~"+p.end.slice(5)+'</span></div>'+
           '<div style="display:flex;flex-direction:column;gap:3px;margin-top:6px">'+
           '<div style="font-size:18px;font-weight:700;color:var(--text)">'+fmtKRW(p.costs)+'</div>'+
+          '<div style="font-size:11px;color:'+rc+'">'+(rate==null?"목표 미설정":"달성률 "+rate.toFixed(0)+"%")+'</div>'+
           '<div style="font-size:11px;color:#767676">노출 '+fmtN(p.imp)+' · 클릭 '+fmtN(p.clk)+' · CTR '+(p.ctr*100).toFixed(2)+'%</div></div></div>';
       }).join(""); }
       var ct=document.querySelector("#phase-cmp-table tbody");
-      if(ct){ ct.innerHTML=phases.map(function(p){ var gray='<td style="color:#9CA3AF">—</td>';
-        return '<tr><td><strong>'+p.name+'</strong></td><td>'+p.start.slice(5)+'~'+p.end.slice(5)+'</td>'+
-          gray+'<td>'+fmtKRW(p.costs)+'</td>'+gray+ gray+'<td>'+fmtN(p.imp)+'</td>'+gray+ gray+'<td>'+(p.ctr*100).toFixed(2)+'%</td>'+gray+'</tr>'; }).join(""); }
+      if(ct){ ct.innerHTML=phases.map(function(p){ var a=achv[p.name]||{};
+        function cell3(act,key,isKRW,isPct){ var o=a[key]||{}; var tg=o.target,ix=o.index;
+          var actS=isKRW?fmtKRW(act):(isPct?(act*100).toFixed(2)+"%":fmtN(act));
+          var tgS=tg==null?"—":(isKRW?fmtKRW(tg):(isPct?(tg*100).toFixed(2)+"%":fmtN(tg)));
+          var ixc=ix==null?"#9CA3AF":(ix>=100?"#22C55E":(ix>=70?"#6B7280":"#EF4444"));
+          return '<td style="color:#9CA3AF">'+tgS+'</td><td>'+actS+'</td><td style="color:'+ixc+'">'+(ix==null?"—":ix.toFixed(0)+"%")+'</td>'; }
+        return '<tr><td><strong>'+p.name+'</strong></td><td>'+p.start.slice(5)+'~'+p.end.slice(5)+'</td>'+cell3(p.costs,"costs",true,false)+cell3(p.imp,"imp",false,false)+cell3(p.ctr,"ctr",false,true)+'</tr>';
+      }).join(""); }
       drawPhaseCharts(phases);
     }catch(e){ if(grid)grid.innerHTML='<div style="padding:14px;color:#B45309">조회 오류</div>'; }
   };
@@ -4214,6 +4237,43 @@ if (window.DI_STATE) {
   window.initMMPage=function(){ if(_mm)try{_mm();}catch(e){} setTimeout(loadCamps,600); };
   // 진입 대비
   setTimeout(function(){var pe=$("page-mm");if(pe)loadCamps();},1200);
+})();
+</script>
+
+
+<!-- ===== Daily 필터 실연결: 실캠페인 드롭다운 + 조회/통화/날짜 스코프 ===== -->
+<script>
+(function(){
+  if(!window.reportApi||!window.reportApi.enabled())return;
+  function $(id){return document.getElementById(id);}
+  async function loadDailyCamps(){
+    var sel=$("daily-camp"); if(!sel)return;
+    try{
+      var d=await fetch(window.reportApi.base()+"/api/campaigns?limit=80").then(function(r){return r.json();});
+      sel.innerHTML='<option value="">전체 캠페인</option>'+(d.campaigns||[]).map(function(c){return '<option>'+c.campaign_name+'</option>';}).join("");
+    }catch(e){}
+  }
+  window.applyDailyFilter=function(){
+    var sel=$("daily-camp"); var camp=sel?sel.value:""; if(camp==="전체 캠페인")camp="";
+    var cr=document.querySelector("input[name=daily-cur]:checked"); var cur=cr?cr.value:"KRW";
+    window.__DAILYF={camp:camp,cur:cur};
+    var s=$("daily-start"), e=$("daily-end");
+    if(window.__setDailyRange&&s&&e&&s.value&&e.value)window.__setDailyRange(s.value,e.value);
+    var hd=document.querySelector("#page-daily .sec-hd span:last-child");
+    if(hd&&s&&e)hd.textContent=(s.value||"")+" ~ "+(e.value||"")+(camp?(" · "+camp):" · 전체 캠페인");
+    if(window.renderDailySum)window.renderDailySum();
+    if(window.renderDailyTbl)window.renderDailyTbl();
+    if(window.renderUserCharts)window.renderUserCharts("daily");
+  };
+  function wire(){
+    loadDailyCamps();
+    var R=window.__RPT||{}; var s=$("daily-start"), e=$("daily-end");
+    if(s&&R.from)s.value=R.from; if(e&&R.to)e.value=R.to;
+    var pd=$("page-daily"); if(pd){var btn=pd.querySelector(".sbtn"); if(btn)btn.onclick=window.applyDailyFilter;}
+    var cs=$("daily-camp"); if(cs)cs.onchange=window.applyDailyFilter;
+    document.querySelectorAll("input[name=daily-cur]").forEach(function(r){r.onchange=window.applyDailyFilter;});
+  }
+  var t=0;(function w(){ if(window.__RPT||t>40){ setTimeout(wire,300); } else { t++; setTimeout(w,150); } })();
 })();
 </script>
 
