@@ -2,6 +2,12 @@
 
 원칙: 사용자(CEO)에게 영향이 있는 변경만 기재. 코드 정리/리팩터는 git 커밋 메시지로만.
 
+## 2026-06-12 (4) — 데이터 사전 반영: 집행회사 + 디바이스/연령/성별
+
+- **집행회사(agency) 디멘션** — Innocean·Dplan·Dpurple. v_perf_unified의 agency를 마트·디멘션에 추가. 에이전시별 분석 가능.
+- **디바이스/연령/성별 세그먼트** — v_perf_unified_{device,age,gender}를 report_mart.report_segments로 적재 + /api/segment 엔드포인트 + 차트빌더 디멘션. 인구통계 분석 가능(Google+Meta).
+- 격리 유지: 세그먼트도 report_mart에 materialize(API SA는 마트만 읽음).
+
 ## 2026-06-12 (3) — 차트 렌더 정리 (깨짐 수정)
 
 - **긴 라벨 정리** — 캠페인·광고주명 등 긴 X축/레이더 축 라벨을 회전·단축 표시(겹침 해소), 툴팁엔 전체명.

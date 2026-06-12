@@ -39,6 +39,7 @@ SELECT
   date, platform,
   brand AS brand_name,
   market AS country,
+  agency,
   CAST(advertiser_id AS STRING) AS advertiser_id, advertiser_name,
   CAST(campaign_id AS STRING) AS campaign_id, campaign_name,
   CAST(NULL AS STRING) AS adgroup_id, CAST(NULL AS STRING) AS adgroup_name,
@@ -59,6 +60,24 @@ SELECT
   CURRENT_TIMESTAMP() AS _loaded_at
 FROM `{UNIFIED}`
 WHERE date IS NOT NULL AND NOT IFNULL(is_excluded, FALSE)
+"""
+
+# ── 1b) 세그먼트(디바이스/연령/성별) 통합 — v_perf_unified_{device,age,gender} ──
+UNI = f"{PROJECT}.apac_kr_unified"
+BUILD_SEGMENTS = f"""
+CREATE OR REPLACE TABLE `{MART}.report_segments`
+PARTITION BY date CLUSTER BY segment_type, platform AS
+SELECT date, platform, CAST(campaign_id AS STRING) campaign_id, market AS country, brand AS brand_name,
+  'device' AS segment_type, device AS segment_value, impressions, clicks, spend_krw AS costs_krw, conversions
+FROM `{UNI}.v_perf_unified_device` WHERE date IS NOT NULL AND NOT IFNULL(is_excluded,FALSE)
+UNION ALL
+SELECT date, platform, CAST(campaign_id AS STRING), market, brand,
+  'age', age_range, impressions, clicks, spend_krw, conversions
+FROM `{UNI}.v_perf_unified_age` WHERE date IS NOT NULL AND NOT IFNULL(is_excluded,FALSE)
+UNION ALL
+SELECT date, platform, CAST(campaign_id AS STRING), market, brand,
+  'gender', gender, impressions, clicks, spend_krw, conversions
+FROM `{UNI}.v_perf_unified_gender` WHERE date IS NOT NULL AND NOT IFNULL(is_excluded,FALSE)
 """
 
 # ── 2) 커버리지 스냅샷 (정직성 배너 소스) ─────────────────────────────────
@@ -88,6 +107,7 @@ def run(label, sql):
 if __name__ == "__main__":
     print("report-mart-builder: raw(READ) -> report_mart")
     run("report_campaign_performance", BUILD_PERFORMANCE)
+    run("report_segments", BUILD_SEGMENTS)
     run("mart_coverage", BUILD_COVERAGE)
     # summary
     for r in client.query(f"SELECT platform, rows_n, first_date, last_date, days_n, advertisers_n, campaigns_n FROM `{MART}.mart_coverage` ORDER BY rows_n DESC").result():

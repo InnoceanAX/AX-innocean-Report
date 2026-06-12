@@ -1875,6 +1875,10 @@ window.DIM_CATALOG = [
   {id:'campaign_id',label:'캠페인 ID',col:'campaign_id'},
   {id:'brand_name',label:'브랜드',col:'brand_name'},
   {id:'advertiser',label:'광고주',col:'advertiser_standardized'},
+  {id:'agency',label:'집행회사',col:'agency'},
+  {id:'device',label:'디바이스',col:'device'},
+  {id:'age',label:'연령',col:'age_range'},
+  {id:'gender',label:'성별',col:'gender'},
   {id:'country',label:'국가',col:'country'},
   {id:'phase',label:'Phase',col:'phase'},
   {id:'product',label:'광고 상품',col:'ad_product'},
@@ -3632,7 +3636,7 @@ if (window.DI_STATE) {
   var RPT={dateFrom:null,dateTo:null,ready:false};
 
   // 프론트 카탈로그 id -> API dim/metric (없으면 미지원)
-  var DIM2API={media:"platform",campaign:"campaign_name",brand_name:"brand_name",advertiser:"advertiser_name",country:"country",date:"date",year:"year",month:"month"};
+  var DIM2API={media:"platform",campaign:"campaign_name",brand_name:"brand_name",advertiser:"advertiser_name",agency:"agency",country:"country",date:"date",year:"year",month:"month"};
   var IDX2API={costs:"spend",costs_krw:"costs_krw",costs_usd:"costs_usd",cpm:"cpm",cpc:"cpc",impressions:"impressions",reach:"reach",frequency:"frequency",clicks:"clicks",ctr:"ctr",conversions:"conversions",conversion_rate:"conversion_rate"};
   var INDEX_BASE={impressions_index:"impressions",clicks_index:"clicks",conversions_index:"conversions",costs_index:"costs_krw"};
 
@@ -3901,7 +3905,7 @@ if (window.DI_STATE) {
 <script>
 (function(){
   if(!window.reportApi||!window.reportApi.enabled())return;
-  var DIM2API={media:"platform",campaign:"campaign_name",brand_name:"brand_name",advertiser:"advertiser_name",country:"country",date:"date",year:"year",month:"month"};
+  var DIM2API={media:"platform",campaign:"campaign_name",brand_name:"brand_name",advertiser:"advertiser_name",agency:"agency",country:"country",date:"date",year:"year",month:"month"};
   var IDX2API={costs:"costs_krw",costs_krw:"costs_krw",costs_usd:"costs_usd",cpm:"cpm",cpc:"cpc",impressions:"impressions",reach:"reach",frequency:"frequency",clicks:"clicks",link_clicks:"clicks",ctr:"ctr",ctr_link_click:"ctr",conversions:"conversions",conversion_rate:"conversion_rate"};
   var INDEX_BASE={impressions_index:"impressions",clicks_index:"clicks",conversions_index:"conversions",costs_index:"costs_krw"};
   var PCT={ctr:1,conversion_rate:1,ctr_link_click:1};
@@ -3915,7 +3919,7 @@ if (window.DI_STATE) {
   // 스펙(dim,idxs,type) -> 실데이터 차트
   async function drawRealChart(canvasId,spec){
     if(typeof Chart==="undefined")return; var el=document.getElementById(canvasId); if(!el)return;
-    var dim=spec.dim||"date"; var apiDim=DIM2API[dim];
+    var dim=spec.dim||"date"; var SEG={device:1,age:1,gender:1}; var apiDim=DIM2API[dim]||(SEG[dim]?dim:null);
     var idxs=(spec.idxs||[]).filter(function(i){return metricFor(i);});
     var note=function(t){ var ex=Chart.getChart(el); if(ex)ex.destroy(); var p=el.parentNode; p.style.height="auto"; p.style.minHeight="64px"; var d=p.querySelector(".rpt-cnote"); if(!d){d=document.createElement("div");d.className="rpt-cnote";d.style.cssText="padding:14px;color:#9CA3AF;font-size:12px;text-align:center;line-height:1.5";p.appendChild(d);} d.textContent=t; el.style.display="none"; };
     var clearNote=function(){ var p=el.parentNode; p.style.height=""; p.style.minHeight=""; var d=p.querySelector(".rpt-cnote"); if(d)d.remove(); el.style.display=""; };
@@ -3923,8 +3927,14 @@ if (window.DI_STATE) {
     if(!idxs.length){ note("이 지표는 아직 수집 전입니다 (조회수·ROAS 등). 지표를 바꾸거나 카드 우상단 ×로 삭제하세요."); return; }
     var mets=idxs.map(metricFor);
     try{
-      var rows=await q([apiDim],mets,null,3000);
-      rows=rows.filter(function(r){return r[apiDim]!=null;});
+      var rows;
+      if(SEG[dim]){
+        var sr=await fetch(window.reportApi.base()+"/api/segment",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({segment:dim,metrics:mets,date_from:dates().f,date_to:dates().t})}).then(function(r){return r.json();}).catch(function(){return {};});
+        rows=(sr.rows||[]).map(function(r){var o={};o[apiDim]=r.k;mets.forEach(function(m){o[m]=r[m];});return o;});
+      } else {
+        rows=await q([apiDim],mets,null,3000);
+        rows=rows.filter(function(r){return r[apiDim]!=null;});
+      }
       if(dim==="date"){ rows.sort(function(a,b){return a.date<b.date?-1:1;}); if(rows.length>40){var step=Math.ceil(rows.length/40);rows=rows.filter(function(_,i){return i%step===0;});} }
       else { rows.sort(function(a,b){return (b[mets[0]]||0)-(a[mets[0]]||0);}); rows=rows.slice(0,12); }
       clearNote();

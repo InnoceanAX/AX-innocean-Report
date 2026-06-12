@@ -30,7 +30,7 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 # ── 화이트리스트 (SQL 인젝션 차단 + 적응형 카탈로그의 진실원천) ──────────────
 DIMS = {
     "platform": "platform", "brand_name": "brand_name", "country": "country",
-    "advertiser_name": "advertiser_name", "campaign_name": "campaign_name",
+    "advertiser_name": "advertiser_name", "campaign_name": "campaign_name", "agency": "agency",
     "adgroup_name": "adgroup_name", "ad_name": "ad_name",
     "date": "date", "year": "EXTRACT(YEAR FROM date)", "month": "FORMAT_DATE('%Y-%m', date)",
 }
@@ -295,6 +295,42 @@ def achievement(req: AchieveReq):
     out = [{"key": k, "actual": actual.get(k), "target": target.get(k),
             "index": (round(actual[k] / target[k] * 100, 1) if actual.get(k) is not None and target.get(k) else None)} for k in keys]
     return {"metric": req.metric, "base": base, "by": req.by, "rows": out}
+
+
+
+SEGMENTS = f"{MART}.report_segments"
+SEG_DIMS = {"platform", "country", "brand_name", "campaign_id"}
+SEG_ADD = {"impressions": "SUM(impressions)", "clicks": "SUM(clicks)", "costs_krw": "SUM(costs_krw)", "conversions": "SUM(conversions)"}
+SEG_RAT = {"ctr": "SAFE_DIVIDE(SUM(clicks),SUM(impressions))", "cpm": "SAFE_DIVIDE(SUM(costs_krw),SUM(impressions))*1000", "cpc": "SAFE_DIVIDE(SUM(costs_krw),SUM(clicks))"}
+
+
+class SegReq(BaseModel):
+    segment: str                       # device | age | gender
+    metrics: list[str] = ["impressions", "clicks", "costs_krw"]
+    filters: dict = {}
+    date_from: Optional[str] = None
+    date_to: Optional[str] = None
+
+
+@app.post("/api/segment")
+def segment(req: SegReq):
+    if req.segment not in ("device", "age", "gender"):
+        raise HTTPException(400, "segment must be device|age|gender")
+    allm = {**SEG_ADD, **SEG_RAT}
+    mets = [m for m in req.metrics if m in allm] or ["impressions"]
+    where = ["segment_type=@seg", "date IS NOT NULL"]
+    params = [bigquery.ScalarQueryParameter("seg", "STRING", req.segment)]
+    for col, val in (req.filters or {}).items():
+        if col in SEG_DIMS:
+            where.append(f"{col}=@f_{col}"); params.append(bigquery.ScalarQueryParameter(f"f_{col}", "STRING", str(val)))
+    if req.date_from:
+        where.append("date>=@df"); params.append(bigquery.ScalarQueryParameter("df", "DATE", req.date_from))
+    if req.date_to:
+        where.append("date<=@dt"); params.append(bigquery.ScalarQueryParameter("dt", "DATE", req.date_to))
+    sel = "segment_value AS k, " + ", ".join(f"{allm[m]} AS {m}" for m in mets)
+    sql = f"SELECT {sel} FROM `{SEGMENTS}` WHERE {' AND '.join(where)} GROUP BY 1 ORDER BY 2 DESC"
+    rows = _q(sql, params)
+    return {"segment": req.segment, "metrics": mets, "rows": rows}
 
 
 @app.get("/")
