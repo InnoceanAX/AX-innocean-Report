@@ -951,10 +951,11 @@ body.dark .bm-item:hover{background:var(--bg-soft2)}
             </button>
             <div class="mc-pop" id="daily-media-pop">
               <label class="mc-item all"><input type="checkbox" id="daily-media-all" checked onchange="mcToggleAll('daily-media')"> 전체 선택</label>
-              <label class="mc-item"><input type="checkbox" class="mc-cb" data-mc="daily-media" value="Google" checked onchange="mcUpdate('daily-media')"> Google</label>
-              <label class="mc-item"><input type="checkbox" class="mc-cb" data-mc="daily-media" value="Meta" checked onchange="mcUpdate('daily-media')"> Meta</label>
-              <label class="mc-item"><input type="checkbox" class="mc-cb" data-mc="daily-media" value="네이버" checked onchange="mcUpdate('daily-media')"> 네이버</label>
-              <label class="mc-item"><input type="checkbox" class="mc-cb" data-mc="daily-media" value="카카오" checked onchange="mcUpdate('daily-media')"> 카카오</label>
+              <label class="mc-item"><input type="checkbox" class="mc-cb" data-mc="daily-media" value="meta" checked onchange="mcUpdate('daily-media')"> Meta</label>
+              <label class="mc-item"><input type="checkbox" class="mc-cb" data-mc="daily-media" value="dv360" checked onchange="mcUpdate('daily-media')"> DV360</label>
+              <label class="mc-item"><input type="checkbox" class="mc-cb" data-mc="daily-media" value="google_ads" checked onchange="mcUpdate('daily-media')"> Google Ads</label>
+              <label class="mc-item"><input type="checkbox" class="mc-cb" data-mc="daily-media" value="tiktok" checked onchange="mcUpdate('daily-media')"> TikTok</label>
+              <label class="mc-item"><input type="checkbox" class="mc-cb" data-mc="daily-media" value="sa360" checked onchange="mcUpdate('daily-media')"> SA360</label>
             </div>
           </div>
         </div>
@@ -3656,7 +3657,7 @@ if (window.DI_STATE) {
   function lbl(grid,msg){grid.innerHTML='<div style="grid-column:1/-1;padding:24px;color:#767676;font-size:13px;border:1px dashed var(--bdr)">'+msg+'</div>';}
 
   async function agg(dims,metrics){
-    var F=window.__DAILYF||{}; var f={}; if(F.camp)f.campaign_name=F.camp;
+    var F=window.__DAILYF||{}; var f={}; if(F.camp)f.campaign_name=F.camp; if(F.platforms&&F.platforms.length)f.platform=F.platforms;
     var cur=F.cur||"KRW";
     var mets=metrics.map(function(m){return (cur==="USD"&&m==="costs_krw")?"costs_usd":m;});
     var r=await window.reportApi.query({dims:dims,metrics:mets,filters:f,date_from:RPT.dateFrom,date_to:RPT.dateTo,limit:2000});
@@ -3917,6 +3918,8 @@ if (window.DI_STATE) {
   var PAL=["#4F46E5","#7C3AED","#EC4899","#F59E0B","#10B981","#3B82F6","#EF4444","#1F2937"];
 
   // 스펙(dim,idxs,type) -> 실데이터 차트
+  function weekKey(d){var dt=new Date(d+"T00:00:00");var day=dt.getDay();var diff=dt.getDate()-day+(day===0?-6:1);dt.setDate(diff);return dt.toISOString().slice(0,10);}
+  function bucketDates(rows,mets,mode){var m={};rows.forEach(function(r){var d=r.date;if(!d)return;var k=mode==="month"?d.slice(0,7):weekKey(d);if(!m[k]){m[k]={date:k};mets.forEach(function(x){m[k][x]=0;});}mets.forEach(function(x){if(typeof r[x]==="number")m[k][x]+=r[x];});});return Object.keys(m).sort().map(function(k){return m[k];});}
   async function drawRealChart(canvasId,spec){
     if(typeof Chart==="undefined")return; var el=document.getElementById(canvasId); if(!el)return;
     var dim=spec.dim||"date"; var SEG={device:1,age:1,gender:1}; var apiDim=DIM2API[dim]||(SEG[dim]?dim:null);
@@ -3935,7 +3938,7 @@ if (window.DI_STATE) {
         rows=await q([apiDim],mets,null,3000);
         rows=rows.filter(function(r){return r[apiDim]!=null;});
       }
-      if(dim==="date"){ rows.sort(function(a,b){return a.date<b.date?-1:1;}); if(rows.length>40){var step=Math.ceil(rows.length/40);rows=rows.filter(function(_,i){return i%step===0;});} }
+      if(dim==="date"){ rows.sort(function(a,b){return a.date<b.date?-1:1;}); var ag=(window.__DAILYF&&window.__DAILYF.agg)||""; if(ag==="주간"||ag==="월간"){ rows=bucketDates(rows,mets,ag==="월간"?"month":"week"); } else if(rows.length>40){var step=Math.ceil(rows.length/40);rows=rows.filter(function(_,i){return i%step===0;});} }
       else { rows.sort(function(a,b){return (b[mets[0]]||0)-(a[mets[0]]||0);}); rows=rows.slice(0,12); }
       clearNote();
       var labels=rows.map(function(r){return r[apiDim];});
@@ -3951,6 +3954,7 @@ if (window.DI_STATE) {
         plugins:{legend:{display:true,position:spec.type==="doughnut"?"right":"bottom",labels:{font:{size:11},padding:10,boxWidth:12}},
           tooltip:{callbacks:{title:function(items){var it=items&&items[0];return (it&&labels[it.dataIndex]!=null)?String(labels[it.dataIndex]):"";}}}},
         scales: spec.type==="doughnut"?{} : spec.type==="radar"?{r:{pointLabels:{font:{size:9},callback:function(l){return (l!=null&&String(l).length>10)?String(l).slice(0,9)+"…":l;}},ticks:{font:{size:8}}}} : {x:{grid:{display:false},ticks:{maxRotation:40,minRotation:0,autoSkip:true,maxTicksLimit:18,font:{size:10},callback:function(v){var l=this.getLabelForValue(v);return (l!=null&&String(l).length>14)?String(l).slice(0,13)+"…":l;}}},y:{grid:{color:"#F3F4F6"},ticks:{callback:function(v){return Math.abs(v)>=1e6?(v/1e6).toFixed(1)+"M":(Math.abs(v)>=1e3?(v/1e3).toFixed(0)+"K":v);}}}}}});
+      var card=el.closest(".user-chart-card,.chart-card"); if(card){ var oc=card.querySelector(".rpt-seg-cap"); if(oc)oc.remove(); if(dim==="age"||dim==="gender"){ var cp=document.createElement("div"); cp.className="rpt-seg-cap"; cp.style.cssText="font-size:10px;color:#B45309;padding:0 14px 8px;text-align:center"; cp.textContent="※ Google "+(dim==="age"?"연령":"성별")+"은 데모 보고분(부분집합) — 비중 비교용"; card.appendChild(cp); } }
     }catch(e){ note("데이터 조회 오류"); }
   }
   function locIdx(id){var c=window.IDX_CATALOG||[];for(var g=0;g<c.length;g++){var it=c[g].items;for(var i=0;i<it.length;i++)if(it[i].id===id)return it[i];}return null;}
@@ -4268,7 +4272,10 @@ if (window.DI_STATE) {
   window.applyDailyFilter=function(){
     var sel=$("daily-camp"); var camp=sel?sel.value:""; if(camp==="전체 캠페인")camp="";
     var cr=document.querySelector("input[name=daily-cur]:checked"); var cur=cr?cr.value:"KRW";
-    window.__DAILYF={camp:camp,cur:cur};
+    var plats=[];document.querySelectorAll(".mc-cb[data-mc=daily-media]:checked").forEach(function(c){plats.push(c.value);});
+    var allp=document.querySelectorAll(".mc-cb[data-mc=daily-media]").length;
+    var ag=$("daily-agg")?$("daily-agg").value:"";
+    window.__DAILYF=Object.assign(window.__DAILYF||{},{camp:camp,cur:cur,platforms:(plats.length&&plats.length<allp)?plats:null,agg:ag});
     var s=$("daily-start"), e=$("daily-end");
     if(window.__setDailyRange&&s&&e&&s.value&&e.value)window.__setDailyRange(s.value,e.value);
     var hd=document.querySelector("#page-daily .sec-hd span:last-child");
