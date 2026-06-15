@@ -2,6 +2,12 @@
 
 원칙: 사용자(CEO)에게 영향이 있는 변경만 기재. 코드 정리/리팩터는 git 커밋 메시지로만.
 
+## 2026-06-12 (7) — ROAS 매체 게이팅 (전환가치 추적 커버리지 기준)
+
+- **ROAS는 전환가치 추적 ≥10% 매체만 표시** — Meta(0.1%·133행)·TikTok(0%)는 추적 데이터 부족으로 ROAS/매출 자동 숨김("Meta가 최악" 오해 방지). 현재 Google·DV360만 노출.
+- **데이터-드리븐** — 마트 커버리지(revenue_coverage/roas_ok)로 게이팅. 추적률 오르면 자동 노출(수동 조정 불필요).
+- 매체간 매출 정의 상이(omni_purchase/conversions_value/revenue) caveat.
+
 ## 2026-06-12 (6) — 데이터 사전 v2: ROAS + 영상지표 활성화
 
 - **ROAS·전환가치(매출)** — v_perf_unified의 revenue_krw 반영. ROAS(매출÷비용) 지표 추가(Google 18.4·DV360 1.1·Meta 0.7). 세그먼트에도 매출/ROAS.

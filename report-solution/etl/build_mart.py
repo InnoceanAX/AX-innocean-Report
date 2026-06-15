@@ -104,6 +104,8 @@ SELECT
   COUNT(DISTINCT campaign_id)    AS campaigns_n,
   COUNTIF(brand_name IS NOT NULL) > 0 AS has_brand,
   COUNTIF(conversions IS NOT NULL) > 0 AS has_conversions,
+  ROUND(SAFE_DIVIDE(COUNTIF(revenue_krw IS NOT NULL AND revenue_krw>0), COUNT(*))*100, 1) AS revenue_coverage,
+  SAFE_DIVIDE(COUNTIF(revenue_krw IS NOT NULL AND revenue_krw>0), COUNT(*)) >= 0.10 AS roas_ok,
   CURRENT_TIMESTAMP()            AS _built_at
 FROM `{MART}.report_campaign_performance`
 GROUP BY platform
