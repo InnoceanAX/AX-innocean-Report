@@ -36,30 +36,40 @@ CREATE OR REPLACE TABLE `{MART}.report_campaign_performance`
 PARTITION BY date
 CLUSTER BY platform, brand_name AS
 SELECT
-  date, platform,
-  brand AS brand_name,
-  market AS country,
-  agency,
-  CAST(advertiser_id AS STRING) AS advertiser_id, advertiser_name,
-  CAST(campaign_id AS STRING) AS campaign_id, campaign_name,
+  u.date, u.platform,
+  u.brand AS brand_name,
+  u.market AS country,
+  u.agency,
+  CAST(u.advertiser_id AS STRING) AS advertiser_id, u.advertiser_name,
+  CAST(u.campaign_id AS STRING) AS campaign_id, u.campaign_name,
   CAST(NULL AS STRING) AS adgroup_id, CAST(NULL AS STRING) AS adgroup_name,
   CAST(NULL AS STRING) AS ad_id, CAST(NULL AS STRING) AS ad_name,
-  currency,
-  spend_local AS spend,
-  spend_krw   AS costs_krw,
-  spend_usd   AS costs_usd,
-  impressions, clicks,
+  u.currency,
+  u.spend_local AS spend,
+  u.spend_krw   AS costs_krw,
+  u.spend_usd   AS costs_usd,
+  u.revenue_krw,
+  u.impressions, u.clicks,
   CAST(NULL AS FLOAT64) AS reach, CAST(NULL AS FLOAT64) AS frequency,
-  conversions,
-  SAFE_DIVIDE(clicks, impressions)            AS ctr,
-  SAFE_DIVIDE(spend_local, clicks)            AS cpc,    -- 현지통화
-  SAFE_DIVIDE(spend_local, impressions) * 1000 AS cpm,   -- 현지통화
-  SAFE_DIVIDE(spend_krw, clicks)              AS cpc_krw,
-  SAFE_DIVIDE(spend_krw, impressions) * 1000  AS cpm_krw,
-  SAFE_DIVIDE(conversions, clicks)            AS conversion_rate,
+  u.conversions,
+  vid.video_views, vid.engagements, vid.video_p25, vid.video_p50, vid.video_p75, vid.video_p100,
+  SAFE_DIVIDE(u.clicks, u.impressions)            AS ctr,
+  SAFE_DIVIDE(u.spend_local, u.clicks)            AS cpc,
+  SAFE_DIVIDE(u.spend_local, u.impressions) * 1000 AS cpm,
+  SAFE_DIVIDE(u.spend_krw, u.clicks)              AS cpc_krw,
+  SAFE_DIVIDE(u.spend_krw, u.impressions) * 1000  AS cpm_krw,
+  SAFE_DIVIDE(u.conversions, u.clicks)            AS conversion_rate,
+  SAFE_DIVIDE(u.revenue_krw, u.spend_krw)         AS roas,
   CURRENT_TIMESTAMP() AS _loaded_at
-FROM `{UNIFIED}`
-WHERE date IS NOT NULL AND NOT IFNULL(is_excluded, FALSE)
+FROM `{UNIFIED}` u
+LEFT JOIN (
+  SELECT date, platform, CAST(campaign_id AS STRING) campaign_id,
+    SUM(video_views) video_views, SUM(engagements) engagements,
+    SUM(video_p25) video_p25, SUM(video_p50) video_p50, SUM(video_p75) video_p75, SUM(video_p100) video_p100
+  FROM `{PROJECT}.apac_kr_unified.v_perf_unified_video`
+  WHERE NOT IFNULL(is_excluded, FALSE) GROUP BY 1,2,3
+) vid ON u.date=vid.date AND u.platform=vid.platform AND CAST(u.campaign_id AS STRING)=vid.campaign_id
+WHERE u.date IS NOT NULL AND NOT IFNULL(u.is_excluded, FALSE)
 """
 
 # ── 1b) 세그먼트(디바이스/연령/성별) 통합 — v_perf_unified_{device,age,gender} ──
@@ -68,15 +78,15 @@ BUILD_SEGMENTS = f"""
 CREATE OR REPLACE TABLE `{MART}.report_segments`
 PARTITION BY date CLUSTER BY segment_type, platform AS
 SELECT date, platform, CAST(campaign_id AS STRING) campaign_id, market AS country, brand AS brand_name,
-  'device' AS segment_type, device AS segment_value, impressions, clicks, spend_krw AS costs_krw, conversions
+  'device' AS segment_type, device AS segment_value, impressions, clicks, spend_krw AS costs_krw, revenue_krw, conversions
 FROM `{UNI}.v_perf_unified_device` WHERE date IS NOT NULL AND NOT IFNULL(is_excluded,FALSE)
 UNION ALL
 SELECT date, platform, CAST(campaign_id AS STRING), market, brand,
-  'age', age_range, impressions, clicks, spend_krw, conversions
+  'age', age_range, impressions, clicks, spend_krw, revenue_krw, conversions
 FROM `{UNI}.v_perf_unified_age` WHERE date IS NOT NULL AND NOT IFNULL(is_excluded,FALSE)
 UNION ALL
 SELECT date, platform, CAST(campaign_id AS STRING), market, brand,
-  'gender', gender, impressions, clicks, spend_krw, conversions
+  'gender', gender, impressions, clicks, spend_krw, revenue_krw, conversions
 FROM `{UNI}.v_perf_unified_gender` WHERE date IS NOT NULL AND NOT IFNULL(is_excluded,FALSE)
 """
 

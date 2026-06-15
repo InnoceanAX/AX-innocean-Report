@@ -39,6 +39,9 @@ ADDITIVE = {
     "spend": "SUM(spend)", "impressions": "SUM(impressions)", "clicks": "SUM(clicks)",
     "reach": "SUM(reach)", "conversions": "SUM(conversions)",
     "costs_krw": "SUM(costs_krw)", "costs_usd": "SUM(costs_usd)",
+    "revenue_krw": "SUM(revenue_krw)",
+    "video_views": "SUM(video_views)", "engagements": "SUM(engagements)",
+    "video_p25": "SUM(video_p25)", "video_p50": "SUM(video_p50)", "video_p75": "SUM(video_p75)", "video_p100": "SUM(video_p100)",
 }
 RATIO = {
     "ctr": "SAFE_DIVIDE(SUM(clicks), SUM(impressions))",
@@ -46,6 +49,10 @@ RATIO = {
     "cpm": "SAFE_DIVIDE(SUM(spend), SUM(impressions)) * 1000",
     "conversion_rate": "SAFE_DIVIDE(SUM(conversions), SUM(clicks))",
     "frequency": "SAFE_DIVIDE(SUM(impressions), SUM(reach))",
+    "roas": "SAFE_DIVIDE(SUM(revenue_krw), SUM(costs_krw))",
+    "vtr": "SAFE_DIVIDE(SUM(video_views), SUM(impressions))",
+    "completion_rate": "SAFE_DIVIDE(SUM(video_p100), SUM(video_views))",
+    "cpv": "SAFE_DIVIDE(SUM(costs_krw), SUM(video_views))",
 }
 METRICS = {**ADDITIVE, **RATIO}
 
@@ -300,8 +307,8 @@ def achievement(req: AchieveReq):
 
 SEGMENTS = f"{MART}.report_segments"
 SEG_DIMS = {"platform", "country", "brand_name", "campaign_id"}
-SEG_ADD = {"impressions": "SUM(impressions)", "clicks": "SUM(clicks)", "costs_krw": "SUM(costs_krw)", "conversions": "SUM(conversions)"}
-SEG_RAT = {"ctr": "SAFE_DIVIDE(SUM(clicks),SUM(impressions))", "cpm": "SAFE_DIVIDE(SUM(costs_krw),SUM(impressions))*1000", "cpc": "SAFE_DIVIDE(SUM(costs_krw),SUM(clicks))"}
+SEG_ADD = {"impressions": "SUM(impressions)", "clicks": "SUM(clicks)", "costs_krw": "SUM(costs_krw)", "conversions": "SUM(conversions)", "revenue_krw": "SUM(revenue_krw)"}
+SEG_RAT = {"ctr": "SAFE_DIVIDE(SUM(clicks),SUM(impressions))", "cpm": "SAFE_DIVIDE(SUM(costs_krw),SUM(impressions))*1000", "cpc": "SAFE_DIVIDE(SUM(costs_krw),SUM(clicks))", "roas": "SAFE_DIVIDE(SUM(revenue_krw),SUM(costs_krw))"}
 
 
 class SegReq(BaseModel):

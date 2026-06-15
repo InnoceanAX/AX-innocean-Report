@@ -1936,7 +1936,9 @@ window.IDX_CATALOG = [
   ]},
   {grp:'전환',items:[
     {id:'conversions',label:'전환수',col:'conversions',tip:'광고를 통해 발생한 전환의 총 횟수'},
-    {id:'conversion_rate',label:'전환율',col:'conversion_rate',tip:'클릭 또는 노출 대비 전환 비율'}
+    {id:'conversion_rate',label:'전환율',col:'conversion_rate',tip:'클릭 또는 노출 대비 전환 비율'},
+    {id:'roas',label:'ROAS',col:'roas',tip:'광고비 대비 전환가치 (전환매출÷비용). google/dv360/sa360만'},
+    {id:'revenue',label:'전환가치(매출)',col:'revenue_krw',tip:'전환으로 발생한 매출(KRW)'}
   ]},
   {grp:'인덱스(목표 대비)',items:[
     {id:'impressions_index',label:'노출 달성률',col:'impressions_index',tip:'목표 노출 대비 실제 노출의 달성 비율'},
@@ -3638,7 +3640,7 @@ if (window.DI_STATE) {
 
   // 프론트 카탈로그 id -> API dim/metric (없으면 미지원)
   var DIM2API={media:"platform",campaign:"campaign_name",brand_name:"brand_name",advertiser:"advertiser_name",agency:"agency",country:"country",date:"date",year:"year",month:"month"};
-  var IDX2API={costs:"spend",costs_krw:"costs_krw",costs_usd:"costs_usd",cpm:"cpm",cpc:"cpc",impressions:"impressions",reach:"reach",frequency:"frequency",clicks:"clicks",ctr:"ctr",conversions:"conversions",conversion_rate:"conversion_rate"};
+  var IDX2API={costs:"spend",costs_krw:"costs_krw",costs_usd:"costs_usd",cpm:"cpm",cpc:"cpc",impressions:"impressions",reach:"reach",frequency:"frequency",clicks:"clicks",ctr:"ctr",conversions:"conversions",conversion_rate:"conversion_rate",roas:"roas",revenue:"revenue_krw",views:"video_views",video_views:"video_views",view_25:"video_p25",view_50:"video_p50",view_75:"video_p75",view_100:"video_p100",thruplay:"video_p100",vtr:"vtr",vtr_100:"completion_rate",cpv:"cpv",engagements:"engagements"};
   var INDEX_BASE={impressions_index:"impressions",clicks_index:"clicks",conversions_index:"conversions",costs_index:"costs_krw"};
 
   // 전역 카탈로그만 사용하는 자체 헬퍼 (메인 IIFE 내부 함수 비의존)
@@ -3907,9 +3909,9 @@ if (window.DI_STATE) {
 (function(){
   if(!window.reportApi||!window.reportApi.enabled())return;
   var DIM2API={media:"platform",campaign:"campaign_name",brand_name:"brand_name",advertiser:"advertiser_name",agency:"agency",country:"country",date:"date",year:"year",month:"month"};
-  var IDX2API={costs:"costs_krw",costs_krw:"costs_krw",costs_usd:"costs_usd",cpm:"cpm",cpc:"cpc",impressions:"impressions",reach:"reach",frequency:"frequency",clicks:"clicks",link_clicks:"clicks",ctr:"ctr",ctr_link_click:"ctr",conversions:"conversions",conversion_rate:"conversion_rate"};
+  var IDX2API={costs:"costs_krw",costs_krw:"costs_krw",costs_usd:"costs_usd",cpm:"cpm",cpc:"cpc",impressions:"impressions",reach:"reach",frequency:"frequency",clicks:"clicks",link_clicks:"clicks",ctr:"ctr",ctr_link_click:"ctr",conversions:"conversions",conversion_rate:"conversion_rate",roas:"roas",revenue:"revenue_krw",views:"video_views",video_views:"video_views",view_25:"video_p25",view_50:"video_p50",view_75:"video_p75",view_100:"video_p100",thruplay:"video_p100",vtr:"vtr",vtr_100:"completion_rate",cpv:"cpv",engagements:"engagements"};
   var INDEX_BASE={impressions_index:"impressions",clicks_index:"clicks",conversions_index:"conversions",costs_index:"costs_krw"};
-  var PCT={ctr:1,conversion_rate:1,ctr_link_click:1};
+  var PCT={ctr:1,conversion_rate:1,ctr_link_click:1,vtr:1,vtr_100:1};
   function metricFor(id){ return IDX2API[id]||INDEX_BASE[id]||null; }
   function dates(){ var R=window.__RPT||{}; return {f:R.fullFrom||"2024-01-01",t:R.to||"2026-06-30"}; }
   async function q(dims,mets,filters,limit){ var d=dates();
