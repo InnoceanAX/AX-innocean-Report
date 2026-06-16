@@ -955,6 +955,7 @@ body.dark .bm-item:hover{background:var(--bg-soft2)}
               <label class="mc-item"><input type="checkbox" class="mc-cb" data-mc="daily-media" value="dv360" checked onchange="mcUpdate('daily-media')"> DV360</label>
               <label class="mc-item"><input type="checkbox" class="mc-cb" data-mc="daily-media" value="google_ads" checked onchange="mcUpdate('daily-media')"> Google Ads</label>
               <label class="mc-item"><input type="checkbox" class="mc-cb" data-mc="daily-media" value="tiktok" checked onchange="mcUpdate('daily-media')"> TikTok</label>
+              <label class="mc-item"><input type="checkbox" class="mc-cb" data-mc="daily-media" value="kakao" checked onchange="mcUpdate('daily-media')"> 카카오</label>
               <label class="mc-item"><input type="checkbox" class="mc-cb" data-mc="daily-media" value="sa360" checked onchange="mcUpdate('daily-media')"> SA360</label>
             </div>
           </div>
@@ -4128,7 +4129,7 @@ if (window.DI_STATE) {
   }
   function setup(){
     var c=document.getElementById("chat-msgs"); if(!c)return; if(document.getElementById("rpt-ai-onboard"))return;
-    c.innerHTML='<div id="rpt-ai-onboard" class="cmsg ai"><div class="cav">AI</div><div><div class="cbubble">안녕하세요. 현재 <b>5개 매체(meta·dv360·google_ads·tiktok·sa360)</b> · 2024~2026 · <b>집행액·노출·클릭·CTR·전환</b> 데이터를 조회할 수 있습니다.<br><br>아래 <b>추천 질문</b>을 눌러보세요 — 결과는 <b>오른쪽 위 차트</b>로 표시됩니다. <span style="color:#B45309">(자연어는 베타·LLM 미연동 — 정형 질문에 가장 정확)</span></div></div></div>';
+    c.innerHTML='<div id="rpt-ai-onboard" class="cmsg ai"><div class="cav">AI</div><div><div class="cbubble">안녕하세요. 현재 <b>6개 매체(meta·dv360·google_ads·tiktok·kakao·sa360)</b> · 2024~2026 · <b>집행액·노출·클릭·CTR·전환</b> 데이터를 조회할 수 있습니다.<br><br>아래 <b>추천 질문</b>을 눌러보세요 — 결과는 <b>오른쪽 위 차트</b>로 표시됩니다. <span style="color:#B45309">(자연어는 베타·LLM 미연동 — 정형 질문에 가장 정확)</span></div></div></div>';
     var box=document.getElementById("rp-sqbtns"); if(box){ box.innerHTML=""; INTENTS.forEach(function(it){ var b=document.createElement("button"); b.className="sqchip"; b.textContent=it.l; b.onclick=function(){ ask(it); }; box.appendChild(b); }); }
     var inp=document.getElementById("chat-input"); if(inp){ inp.onkeydown=function(e){ if(e.key==="Enter"&&!e.shiftKey){ e.preventDefault(); handle(inp.value); inp.value=""; } }; }
     var send=document.querySelector("#page-ai .csend"); if(send){ send.onclick=function(){ handle(inp?inp.value:""); if(inp)inp.value=""; }; }
@@ -4143,8 +4144,8 @@ if (window.DI_STATE) {
 <script>
 (function(){
   if(!window.reportApi||!window.reportApi.enabled())return;
-  var PLATS=[{k:"meta",l:"Meta"},{k:"dv360",l:"DV360"},{k:"google_ads",l:"Google Ads"},{k:"tiktok",l:"TikTok"},{k:"sa360",l:"SA360"}];
-  var PEND=[{k:"naver",l:"네이버"},{k:"kakao",l:"카카오"}];
+  var PLATS=[{k:"meta",l:"Meta"},{k:"dv360",l:"DV360"},{k:"google_ads",l:"Google Ads"},{k:"tiktok",l:"TikTok"},{k:"kakao",l:"카카오"},{k:"sa360",l:"SA360"}];
+  var PEND=[{k:"naver",l:"네이버"}];
   var KPIS=[{k:"impressions",l:"노출수",add:1},{k:"clicks",l:"클릭수",add:1},{k:"ctr",l:"CTR(%)",add:0},{k:"cpm",l:"CPM(원)",add:0},{k:"cpc",l:"CPC(원)",add:0}];
   var CAMP=null, CAMPS={};
   function api(){return window.reportApi.base();}
